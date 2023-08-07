@@ -1,0 +1,3 @@
+[submodule "3rdparty/gtk4-layer-shell"]
+	path = 3rdparty/gtk4-layer-shell
+	url = https://github.com/wmww/gtk4-layer-shell

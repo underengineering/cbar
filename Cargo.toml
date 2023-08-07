@@ -1,0 +1,9 @@
+[package]
+name = "cbar"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+grass = "0.13.1"
+gtk = { version = "0.6.6", package = "gtk4", features = ["v4_10"] }
+gtk4-layer-shell = "0.0.3"
