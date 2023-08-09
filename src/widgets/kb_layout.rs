@@ -1,27 +1,43 @@
-use gtk::glib;
-use gtk::subclass::prelude::*;
+use crate::hyprland::{
+    events::Event,
+    ipc::{self, commands::Devices},
+};
+use gtk::{
+    glib::{self, clone, MainContext},
+    traits::{BoxExt, WidgetExt},
+};
+use tokio::sync::broadcast;
 
-glib::wrapper! {
-    pub struct KeyboardLayout(ObjectSubclass<imp::KeyboardLayout>)
-        @extends gtk::Button, gtk::Widget,
-        @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
-}
+pub fn build_keyboard_label(mut receiver: broadcast::Receiver<Event>) -> gtk::Box {
+    let label = gtk::Label::new(None);
 
-pub mod imp {
-    use gtk::glib;
-    use gtk::subclass::prelude::*;
+    let container = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+    container.set_css_classes(&["widget", "layout"]);
+    container.append(&label);
 
-    #[derive(Default)]
-    pub struct KeyboardLayout;
+    let main_context = MainContext::default();
+    main_context.spawn_local(async move {
+        let mut buffer = Vec::new();
+        if let Some(keyboard) = ipc::request::<Devices>(&mut buffer)
+            .await
+            .unwrap()
+            .keyboards
+            .iter()
+            .find(|kb| kb.main)
+        {
+            label.set_text(&keyboard.active_keymap);
+        }
 
-    #[glib::object_subclass]
-    impl ObjectSubclass for KeyboardLayout {
-        const NAME: &'static str = "CBarKeyboardLayout";
-        type Type = super::KeyboardLayout;
-        type ParentType = gtk::Button;
-    }
+        while let Ok(event) = receiver.recv().await {
+            if let Event::ActiveLayout {
+                keyboard_name: _,
+                layout_name,
+            } = event
+            {
+                label.set_text(&layout_name);
+            }
+        }
+    });
 
-    impl ObjectImpl for KeyboardLayout {}
-    impl WidgetImpl for KeyboardLayout {}
-    impl ButtonImpl for KeyboardLayout {}
+    container
 }
