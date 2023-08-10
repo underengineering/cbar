@@ -15,7 +15,11 @@ macro_rules! impl_lua {
                 if let LuaValue::Integer(value) = value {
                     Ok(<$typ>::try_from(value as i32).unwrap())
                 } else {
-                    panic!("Invalid type for enum, expected number");
+                    panic!(
+                        "Invalid type for enum '{}', expected number, got: {:?}",
+                        stringify!($typ),
+                        value
+                    );
                 }
             }
         }
