@@ -1,6 +1,8 @@
 use gtk::{glib, prelude::*, Application, ApplicationWindow};
 use mlua::{prelude::*, Variadic};
 
+use super::enums;
+
 fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'_, T>) {
     reg.add_method("upcast", |lua, this, ()| {
         lua.create_any_userdata(this.clone().upcast::<gtk::Widget>())
@@ -19,8 +21,11 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
 
 fn add_enums(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     let orientation = lua.create_table()?;
-    orientation.set("Horizontal", 0)?;
-    orientation.set("Vertical", 1)?;
+    orientation.set(
+        "Horizontal",
+        enums::Orientation(gtk::Orientation::Horizontal),
+    )?;
+    orientation.set("Vertical", enums::Orientation(gtk::Orientation::Vertical))?;
     gtk_table.set("Orientation", orientation)?;
 
     // gtk_table.set("PRIORITY_LOW", glib::ffi::G_PRIORITY_LOW)?;
@@ -180,16 +185,12 @@ fn add_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     let gbox = lua.create_table()?;
     gbox.set(
         "new",
-        lua.create_function(|lua, (orientation, spacing): (i32, Option<i32>)| {
-            let orientation = match orientation {
-                0 => gtk::Orientation::Horizontal,
-                1 => gtk::Orientation::Vertical,
-                _ => panic!("Invalid orientation"),
-            };
-
-            let button = gtk::Box::new(orientation, spacing.unwrap_or(0));
-            lua.create_any_userdata(button)
-        })?,
+        lua.create_function(
+            |lua, (orientation, spacing): (enums::Orientation, Option<i32>)| {
+                let button = gtk::Box::new(orientation.0, spacing.unwrap_or(0));
+                lua.create_any_userdata(button)
+            },
+        )?,
     )?;
     gtk_table.set("Box", gbox)?;
 
@@ -245,17 +246,20 @@ fn add_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     let layer_shell = lua.create_table()?;
 
     let layer = lua.create_table()?;
-    layer.set("Background", 0)?;
-    layer.set("Bottom", 1)?;
-    layer.set("Top", 2)?;
-    layer.set("Overlay", 3)?;
+    layer.set(
+        "Background",
+        enums::Layer(gtk4_layer_shell::Layer::Background),
+    )?;
+    layer.set("Bottom", enums::Layer(gtk4_layer_shell::Layer::Bottom))?;
+    layer.set("Top", enums::Layer(gtk4_layer_shell::Layer::Top))?;
+    layer.set("Overlay", enums::Layer(gtk4_layer_shell::Layer::Overlay))?;
     layer_shell.set("Layer", layer)?;
 
     let edge = lua.create_table()?;
-    edge.set("Left", 0)?;
-    edge.set("Right", 1)?;
-    edge.set("Top", 2)?;
-    edge.set("Bottom", 3)?;
+    edge.set("Left", enums::Edge(gtk4_layer_shell::Edge::Left))?;
+    edge.set("Right", enums::Edge(gtk4_layer_shell::Edge::Right))?;
+    edge.set("Top", enums::Edge(gtk4_layer_shell::Edge::Top))?;
+    edge.set("Bottom", enums::Edge(gtk4_layer_shell::Edge::Bottom))?;
     layer_shell.set("Edge", edge)?;
 
     layer_shell.set(
@@ -268,16 +272,8 @@ fn add_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     layer_shell.set(
         "set_layer",
         lua.create_function(
-            |_, (window, layer): (LuaUserDataRef<ApplicationWindow>, i32)| {
-                let layer = match layer {
-                    0 => gtk4_layer_shell::Layer::Background,
-                    1 => gtk4_layer_shell::Layer::Bottom,
-                    2 => gtk4_layer_shell::Layer::Top,
-                    3 => gtk4_layer_shell::Layer::Overlay,
-                    _ => panic!("Invalid layer specified"),
-                };
-
-                gtk4_layer_shell::set_layer(&*window, layer);
+            |_, (window, layer): (LuaUserDataRef<ApplicationWindow>, enums::Layer)| {
+                gtk4_layer_shell::set_layer(&*window, layer.0);
                 Ok(())
             },
         )?,
@@ -301,16 +297,8 @@ fn add_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     layer_shell.set(
         "set_margin",
         lua.create_function(
-            |_, (window, edge, margin_size): (LuaUserDataRef<ApplicationWindow>, i32, i32)| {
-                let edge = match edge {
-                    0 => gtk4_layer_shell::Edge::Left,
-                    1 => gtk4_layer_shell::Edge::Right,
-                    2 => gtk4_layer_shell::Edge::Top,
-                    3 => gtk4_layer_shell::Edge::Bottom,
-                    _ => panic!("Invalid edge specified"),
-                };
-
-                gtk4_layer_shell::set_margin(&*window, edge, margin_size);
+            |_, (window, edge, margin_size): (LuaUserDataRef<ApplicationWindow>, enums::Edge, i32)| {
+                gtk4_layer_shell::set_margin(&*window, edge.0, margin_size);
                 Ok(())
             },
         )?,
