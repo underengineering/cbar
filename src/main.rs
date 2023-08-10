@@ -44,6 +44,26 @@ async fn main() -> LuaResult<()> {
             end
         end)
 
+        ctx:spawn_local(function()
+            print'running event loop'
+
+            local event_loop = hyprland.EventLoop.connect()
+            print'connected to event loop'
+
+            local event_receiver = event_loop:receiver()
+            ctx:spawn_local(function()
+                while true do
+                    local ev = event_receiver:recv()
+                    print("event", ev)
+                    for k, v in pairs(ev) do
+                        print(k, v)
+                    end
+                end
+            end)
+        
+            event_loop:run()
+        end)
+
         gtk.app:connect_activate(function()
             print'activate'
 
