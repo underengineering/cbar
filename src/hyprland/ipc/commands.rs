@@ -1,10 +1,10 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 pub trait Command {
     const NAME: &'static str;
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Workspace {
     pub id: u64,
     pub name: String,
@@ -20,14 +20,14 @@ impl Command for Vec<Workspace> {
     const NAME: &'static str = "workspaces";
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Mouse {
     pub address: String,
     pub name: String,
     pub defaultSpeed: f32,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Keyboard {
     pub address: String,
     pub name: String,
@@ -40,13 +40,13 @@ pub struct Keyboard {
     pub main: bool,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct TabletOwner {
     pub address: String,
     pub name: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Tablet {
     pub address: String,
     #[serde(rename = "type")]
@@ -54,19 +54,19 @@ pub struct Tablet {
     pub belongsTo: TabletOwner,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Touch {
     pub address: String,
     pub name: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Switch {
     pub address: String,
     pub name: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Devices {
     pub mice: Vec<Mouse>,
     pub keyboards: Vec<Keyboard>,
@@ -79,13 +79,13 @@ impl Command for Devices {
     const NAME: &'static str = "devices";
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PartialWorkspace {
     pub address: String,
     pub name: String,
 }
 
-#[derive(Deserialize, Default, Debug)]
+#[derive(Serialize, Deserialize, Default, Debug)]
 pub struct ActiveWindow {
     pub address: Option<String>,
     pub mapped: Option<bool>,

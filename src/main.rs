@@ -13,7 +13,9 @@ async fn main() -> LuaResult<()> {
     let globals = lua.globals();
     let gtk_table = luaapi::gtk::add_api(&lua)?;
     let utils_table = luaapi::utils::add_api(&lua)?;
+    let hyprland_table = luaapi::hyprland::add_api(&lua)?;
     globals.set("utils", utils_table)?;
+    globals.set("hyprland", hyprland_table)?;
 
     let app = Application::builder().application_id(APP_ID).build();
 
@@ -28,6 +30,18 @@ async fn main() -> LuaResult<()> {
             print'running in async ctx'
             utils.sleep(1.5)
             print'after 1.5s'
+        end)
+
+        ctx:spawn_local(function()
+            print'ipc'
+            local resp = hyprland.ipc_request("workspaces")
+            print("resp", resp)
+            for k, v in pairs(resp) do
+                print(k, v)
+                for i, j in pairs(v) do
+                    print(i, j)
+                end
+            end
         end)
 
         gtk.app:connect_activate(function()

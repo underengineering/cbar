@@ -11,6 +11,7 @@ mlua = { git = "https://github.com/khvzak/mlua.git", rev = "c0c6a33f94127188a528
     "async",
     "luajit",
     "unstable",
+    "serialize",
 ] }
 chrono = "0.4.26"
 freedesktop-icons = "0.2.3"
