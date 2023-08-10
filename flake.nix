@@ -110,6 +110,7 @@
         # Packages used by the flake at run-time
         buildInputs = with pkgs; [
           gtk4
+          luajit
         ];
         # Build dependencies
         nativeBuildInputs = with pkgs; [

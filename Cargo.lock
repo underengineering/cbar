@@ -132,6 +132,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "630be753d4e58660abd17930c71b647fe46c27ea6b63cc59e1e3851406972e42"
 
 [[package]]
+name = "bstr"
+version = "1.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6798148dccfbff0fae41c7574d2fa8f1ef3492fba0face179de5d8d447d67b05"
+dependencies = [
+ "memchr",
+ "serde",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -177,6 +187,7 @@ dependencies = [
  "grass",
  "gtk4",
  "gtk4-layer-shell",
+ "mlua",
  "serde",
  "serde_json",
  "sysinfo",
@@ -957,6 +968,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "mlua"
+version = "0.9.0-rc.3"
+source = "git+https://github.com/khvzak/mlua.git?rev=c0c6a33f94127188a528801656effa89387880eb#c0c6a33f94127188a528801656effa89387880eb"
+dependencies = [
+ "bstr",
+ "futures-util",
+ "mlua-sys",
+ "num-traits",
+ "once_cell",
+ "rustc-hash",
+]
+
+[[package]]
+name = "mlua-sys"
+version = "0.3.1"
+source = "git+https://github.com/khvzak/mlua.git?rev=c0c6a33f94127188a528801656effa89387880eb#c0c6a33f94127188a528801656effa89387880eb"
+dependencies = [
+ "cc",
+ "cfg-if",
+ "pkg-config",
+]
+
+[[package]]
 name = "ntapi"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1248,6 +1282,12 @@ name = "rustc-demangle"
 version = "0.1.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d626bb9dae77e28219937af045c257c28bfd3f69333c512553507f5f9798cb76"
+
+[[package]]
+name = "rustc-hash"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
 name = "rustc_version"

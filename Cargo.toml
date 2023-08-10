@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+mlua = { git = "https://github.com/khvzak/mlua.git", rev = "c0c6a33f94127188a528801656effa89387880eb", features = [
+    "async",
+    "luajit",
+    "unstable",
+] }
 chrono = "0.4.26"
 freedesktop-icons = "0.2.3"
 grass = "0.13.1"
@@ -13,4 +18,11 @@ serde = { version = "1.0.183", features = ["derive"] }
 serde_json = "1.0.104"
 sysinfo = "0.29.7"
 thiserror = "1.0.44"
-tokio = { version = "1.29.1", features = ["macros", "time", "rt-multi-thread", "net", "io-util", "sync"] }
+tokio = { version = "1.29.1", features = [
+    "macros",
+    "time",
+    "rt-multi-thread",
+    "net",
+    "io-util",
+    "sync",
+] }
