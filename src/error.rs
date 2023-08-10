@@ -10,4 +10,6 @@ pub enum Error {
     IoError(#[from] io::Error),
     #[error("Config file does not exist")]
     ConfigFileDoesNotExist,
+    #[error("Config file is not a file")]
+    ConfigFileNotAFile,
 }

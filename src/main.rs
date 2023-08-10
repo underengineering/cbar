@@ -27,7 +27,7 @@ async fn main() -> Result<(), Error> {
     let args = Args::parse();
     let config_path = args.config.unwrap_or_else(|| {
         let mut path = PathBuf::from(env::var("HOME").expect("Failed to get the HOME variable"));
-        path.push(".config/main.lua");
+        path.push(".config/cbar/main.lua");
         path
     });
 
@@ -35,7 +35,11 @@ async fn main() -> Result<(), Error> {
         return Err(Error::ConfigFileDoesNotExist);
     }
 
-    let lua = Lua::new();
+    if !config_path.is_file() {
+        return Err(Error::ConfigFileNotAFile);
+    }
+
+    let lua = unsafe { Lua::unsafe_new() };
     lua.load_from_std_lib(LuaStdLib::ALL)?;
 
     let globals = lua.globals();
@@ -47,13 +51,20 @@ async fn main() -> Result<(), Error> {
     globals.set("hyprland", hyprland_table)?;
     globals.set("sysinfo", sysinfo_table)?;
 
+    // Set current directory to the config path
+    env::set_current_dir(
+        config_path
+            .parent()
+            .expect("Failed to get config parent directory"),
+    )?;
+
     let app = Application::builder().application_id(APP_ID).build();
 
     gtk_table.set("app", lua.create_any_userdata(app)?)?;
     globals.set("gtk", gtk_table)?;
 
     let config = fs::read_to_string(&config_path)?;
-    lua.load(config).set_name("main").exec()?;
+    lua.load(config).exec()?;
 
     Ok(())
 }
