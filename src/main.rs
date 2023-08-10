@@ -12,7 +12,8 @@ async fn main() -> LuaResult<()> {
     let lua = Lua::new();
     let globals = lua.globals();
     let gtk_table = luaapi::gtk::add_api(&lua)?;
-    luaapi::utils::add_api(&lua)?;
+    let utils_table = luaapi::utils::add_api(&lua)?;
+    globals.set("utils", utils_table)?;
 
     let app = Application::builder().application_id(APP_ID).build();
 
@@ -21,6 +22,14 @@ async fn main() -> LuaResult<()> {
 
     lua.load(
         r#"
+        print(utils.lookup_icon("org.wezfurlong.wezterm"))
+        local ctx = gtk.MainContext.default()
+        ctx:spawn_local(function()
+            print'running in async ctx'
+            utils.sleep(1.5)
+            print'after 1.5s'
+        end)
+
         gtk.app:connect_activate(function()
             print'activate'
 
@@ -47,6 +56,7 @@ async fn main() -> LuaResult<()> {
 
             win:present()
         end)
+
         gtk.app:run()
     "#,
     )
