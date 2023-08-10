@@ -14,8 +14,10 @@ async fn main() -> LuaResult<()> {
     let gtk_table = luaapi::gtk::add_api(&lua)?;
     let utils_table = luaapi::utils::add_api(&lua)?;
     let hyprland_table = luaapi::hyprland::add_api(&lua)?;
+    let sysinfo_table = luaapi::sysinfo::add_api(&lua)?;
     globals.set("utils", utils_table)?;
     globals.set("hyprland", hyprland_table)?;
+    globals.set("sysinfo", sysinfo_table)?;
 
     let app = Application::builder().application_id(APP_ID).build();
 
@@ -25,6 +27,17 @@ async fn main() -> LuaResult<()> {
     lua.load(
         r#"
         print(utils.lookup_icon("org.wezfurlong.wezterm"))
+
+        print("is on AC:", sysinfo.battery.is_on_ac())
+
+        local info = sysinfo.battery.get_batteries()
+        print("total capacity:", info.total_capacity)
+        print("remaining time:", info.remaining_time.secs)
+        print'Batteries:'
+        for name, info in pairs(info.info) do
+            print(name, "capacity:", info.capacity, "remaining_time:", info.remaining_time.secs, "status:", info.status)
+        end
+
         local ctx = gtk.MainContext.default()
         ctx:spawn_local(function()
             print'running in async ctx'
