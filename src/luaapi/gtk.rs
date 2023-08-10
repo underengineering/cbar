@@ -241,6 +241,103 @@ fn add_context_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
+fn add_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+    let layer_shell = lua.create_table()?;
+
+    let layer = lua.create_table()?;
+    layer.set("Background", 0)?;
+    layer.set("Bottom", 1)?;
+    layer.set("Top", 2)?;
+    layer.set("Overlay", 3)?;
+    layer_shell.set("Layer", layer)?;
+
+    let edge = lua.create_table()?;
+    edge.set("Left", 0)?;
+    edge.set("Right", 1)?;
+    edge.set("Top", 2)?;
+    edge.set("Bottom", 3)?;
+    layer_shell.set("Edge", edge)?;
+
+    layer_shell.set(
+        "init_for_window",
+        lua.create_function(|_, window: LuaUserDataRef<ApplicationWindow>| {
+            gtk4_layer_shell::init_for_window(&*window);
+            Ok(())
+        })?,
+    )?;
+    layer_shell.set(
+        "set_layer",
+        lua.create_function(
+            |_, (window, layer): (LuaUserDataRef<ApplicationWindow>, i32)| {
+                let layer = match layer {
+                    0 => gtk4_layer_shell::Layer::Background,
+                    1 => gtk4_layer_shell::Layer::Bottom,
+                    2 => gtk4_layer_shell::Layer::Top,
+                    3 => gtk4_layer_shell::Layer::Overlay,
+                    _ => panic!("Invalid layer specified"),
+                };
+
+                gtk4_layer_shell::set_layer(&*window, layer);
+                Ok(())
+            },
+        )?,
+    )?;
+    layer_shell.set(
+        "auto_exclusive_zone_enable",
+        lua.create_function(|_, window: LuaUserDataRef<ApplicationWindow>| {
+            gtk4_layer_shell::auto_exclusive_zone_enable(&*window);
+            Ok(())
+        })?,
+    )?;
+    layer_shell.set(
+        "set_exclusive_zone",
+        lua.create_function(
+            |_, (window, exclusive_zone): (LuaUserDataRef<ApplicationWindow>, i32)| {
+                gtk4_layer_shell::set_exclusive_zone(&*window, exclusive_zone);
+                Ok(())
+            },
+        )?,
+    )?;
+    layer_shell.set(
+        "set_margin",
+        lua.create_function(
+            |_, (window, edge, margin_size): (LuaUserDataRef<ApplicationWindow>, i32, i32)| {
+                let edge = match edge {
+                    0 => gtk4_layer_shell::Edge::Left,
+                    1 => gtk4_layer_shell::Edge::Right,
+                    2 => gtk4_layer_shell::Edge::Top,
+                    3 => gtk4_layer_shell::Edge::Bottom,
+                    _ => panic!("Invalid edge specified"),
+                };
+
+                gtk4_layer_shell::set_margin(&*window, edge, margin_size);
+                Ok(())
+            },
+        )?,
+    )?;
+    layer_shell.set(
+        "set_anchor",
+        lua.create_function(
+            |_, (window, edge, anchor_to_edge): (LuaUserDataRef<ApplicationWindow>, i32, bool)| {
+                let edge = match edge {
+                    0 => gtk4_layer_shell::Edge::Left,
+                    1 => gtk4_layer_shell::Edge::Right,
+                    2 => gtk4_layer_shell::Edge::Top,
+                    3 => gtk4_layer_shell::Edge::Bottom,
+                    _ => panic!("Invalid edge specified"),
+                };
+
+                gtk4_layer_shell::set_anchor(&*window, edge, anchor_to_edge);
+                Ok(())
+            },
+        )?,
+    )?;
+
+    gtk_table.set("layer_shell", layer_shell)?;
+
+    Ok(())
+}
+
 pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     let gtk_table = lua.create_table()?;
 
@@ -253,6 +350,7 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     add_box_api(lua, &gtk_table)?;
     add_css_provider(lua, &gtk_table)?;
     add_context_api(lua, &gtk_table)?;
+    add_layer_shell_api(lua, &gtk_table)?;
 
     Ok(gtk_table)
 }
