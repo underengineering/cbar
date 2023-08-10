@@ -3,6 +3,9 @@ name = "cbar"
 version = "0.1.0"
 edition = "2021"
 
+[profile.release]
+lto = "thin"
+
 [dependencies]
 mlua = { git = "https://github.com/khvzak/mlua.git", rev = "c0c6a33f94127188a528801656effa89387880eb", features = [
     "async",
