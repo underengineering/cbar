@@ -78,7 +78,7 @@ fn add_application_api(lua: &Lua) -> LuaResult<()> {
         });
 
         reg.add_method("run", |_, this, ()| {
-            this.run();
+            this.run_with_args(&[""]);
             Ok(())
         });
     })?;
@@ -105,6 +105,8 @@ fn add_application_window_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> 
             this.present();
             Ok(())
         });
+
+        add_widget_methods(reg);
     })?;
     let window = lua.create_table()?;
     window.set(
