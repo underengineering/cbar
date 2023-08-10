@@ -30,3 +30,4 @@ tokio = { version = "1.29.1", features = [
     "io-util",
     "sync",
 ] }
+clap = { version = "4.3.21", features = ["derive"] }

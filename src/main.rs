@@ -1,15 +1,43 @@
+use std::{env, path::PathBuf};
+
+use clap::Parser;
 use gtk::Application;
 use mlua::prelude::*;
+use std::fs;
 
 const APP_ID: &str = "org.gtk_rs.HelloWorld1";
 
+mod error;
 mod hyprland;
 mod luaapi;
 mod system_info;
 
+use crate::error::Error;
+
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// Path to the lua file to execute. Defaults to $HOME/.config/cbar/main.lua
+    #[arg(short, long)]
+    config: Option<PathBuf>,
+}
+
 #[tokio::main]
-async fn main() -> LuaResult<()> {
+async fn main() -> Result<(), Error> {
+    let args = Args::parse();
+    let config_path = args.config.unwrap_or_else(|| {
+        let mut path = PathBuf::from(env::var("HOME").expect("Failed to get the HOME variable"));
+        path.push(".config/main.lua");
+        path
+    });
+
+    if !config_path.try_exists()? {
+        return Err(Error::ConfigFileDoesNotExist);
+    }
+
     let lua = Lua::new();
+    lua.load_from_std_lib(LuaStdLib::ALL)?;
+
     let globals = lua.globals();
     let gtk_table = luaapi::gtk::add_api(&lua)?;
     let utils_table = luaapi::utils::add_api(&lua)?;
@@ -24,90 +52,8 @@ async fn main() -> LuaResult<()> {
     gtk_table.set("app", lua.create_any_userdata(app)?)?;
     globals.set("gtk", gtk_table)?;
 
-    lua.load(
-        r#"
-        print(utils.lookup_icon("org.wezfurlong.wezterm"))
-
-        print("is on AC:", sysinfo.battery.is_on_ac())
-
-        local info = sysinfo.battery.get_batteries()
-        print("total capacity:", info.total_capacity)
-        print("remaining time:", info.remaining_time.secs)
-        print'Batteries:'
-        for name, info in pairs(info.info) do
-            print(name, "capacity:", info.capacity, "remaining_time:", info.remaining_time.secs, "status:", info.status)
-        end
-
-        local ctx = gtk.MainContext.default()
-        ctx:spawn_local(function()
-            print'running in async ctx'
-            utils.sleep(1.5)
-            print'after 1.5s'
-        end)
-
-        ctx:spawn_local(function()
-            print'ipc'
-            local resp = hyprland.ipc_request("workspaces")
-            print("resp", resp)
-            for k, v in pairs(resp) do
-                print(k, v)
-                for i, j in pairs(v) do
-                    print(i, j)
-                end
-            end
-        end)
-
-        ctx:spawn_local(function()
-            print'running event loop'
-
-            local event_loop = hyprland.EventLoop.connect()
-            print'connected to event loop'
-
-            local event_receiver = event_loop:receiver()
-            ctx:spawn_local(function()
-                while true do
-                    local ev = event_receiver:recv()
-                    print("event", ev)
-                    for k, v in pairs(ev) do
-                        print(k, v)
-                    end
-                end
-            end)
-        
-            event_loop:run()
-        end)
-
-        gtk.app:connect_activate(function()
-            print'activate'
-
-            local win = gtk.ApplicationWindow.new(gtk.app)
-            win:set_title("Window title")
-
-            local box = gtk.Box.new(gtk.Orientation.Horizontal, 0)
-
-            local btn = gtk.Button.new()
-            btn:set_label("test")
-
-            local lbl = gtk.Label.new()
-            lbl:set_markup("<small>adsadasd</small>")
-
-            box:append(btn:upcast())
-            box:append(lbl:upcast())
-
-            btn:connect_clicked(function()
-                local text = gtk.Label.new("STOP PRESSING PLS")
-                box:append(text:upcast())
-            end)
-
-            win:set_child(box:upcast())
-
-            win:present()
-        end)
-
-        gtk.app:run()
-    "#,
-    )
-    .exec()?;
+    let config = fs::read_to_string(&config_path)?;
+    lua.load(config).set_name("main").exec()?;
 
     Ok(())
 }
