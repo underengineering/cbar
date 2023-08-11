@@ -13,10 +13,13 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
         Ok(())
     });
 
-    reg.add_method("set_css_classes", |_lua, this, classes: Variadic<String>| {
-        this.set_css_classes(&classes.iter().map(String::as_str).collect::<Vec<_>>());
-        Ok(())
-    });
+    reg.add_method(
+        "set_css_classes",
+        |_lua, this, classes: Variadic<String>| {
+            this.set_css_classes(&classes.iter().map(String::as_str).collect::<Vec<_>>());
+            Ok(())
+        },
+    );
 }
 
 fn add_enums(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
@@ -204,6 +207,55 @@ fn add_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
+fn add_image_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+    lua.register_userdata_type::<gtk::Image>(|reg| {
+        reg.add_method("set_pixel_size", |_, this, pixel_size: i32| {
+            this.set_pixel_size(pixel_size);
+            Ok(())
+        });
+
+        reg.add_method("set_from_file", |_, this, path: Option<String>| {
+            this.set_from_file(path);
+            Ok(())
+        });
+
+        reg.add_method(
+            "set_from_icon_name",
+            |_, this, icon_name: Option<String>| {
+                this.set_from_icon_name(icon_name.as_deref());
+                Ok(())
+            },
+        );
+
+        add_widget_methods(reg);
+    })?;
+    let image = lua.create_table()?;
+    image.set(
+        "new",
+        lua.create_function(|lua, ()| {
+            let image = gtk::Image::new();
+            lua.create_any_userdata(image)
+        })?,
+    )?;
+    image.set(
+        "from_file",
+        lua.create_function(|lua, path: String| {
+            let image = gtk::Image::from_file(path);
+            lua.create_any_userdata(image)
+        })?,
+    )?;
+    image.set(
+        "from_icon_name",
+        lua.create_function(|lua, icon_name: String| {
+            let image = gtk::Image::from_icon_name(&icon_name);
+            lua.create_any_userdata(image)
+        })?,
+    )?;
+    gtk_table.set("Image", image)?;
+
+    Ok(())
+}
+
 fn add_css_provider(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::CssProvider>(|reg| {
         reg.add_method("load_from_data", |_, this, data: String| {
@@ -343,6 +395,7 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     add_label_api(lua, &gtk_table)?;
     add_button_api(lua, &gtk_table)?;
     add_box_api(lua, &gtk_table)?;
+    add_image_api(lua, &gtk_table)?;
     add_css_provider(lua, &gtk_table)?;
     add_context_api(lua, &gtk_table)?;
     add_layer_shell_api(lua, &gtk_table)?;
