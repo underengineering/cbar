@@ -1,5 +1,5 @@
 use gtk::{glib, prelude::*, Application, ApplicationWindow};
-use mlua::{prelude::*, Variadic};
+use mlua::prelude::*;
 
 use super::enums;
 
@@ -48,13 +48,13 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
     );
 }
 
-fn add_layout_manager_methods<T: glib::IsA<gtk::LayoutManager>>(
-    reg: &mut LuaUserDataRegistry<'_, T>,
-) {
-    reg.add_method("upcast", |lua, this, ()| {
-        lua.create_any_userdata(this.clone().upcast::<gtk::LayoutManager>())
-    });
-}
+// fn add_layout_manager_methods<T: glib::IsA<gtk::LayoutManager>>(
+//     reg: &mut LuaUserDataRegistry<'_, T>,
+// ) {
+//     reg.add_method("upcast", |lua, this, ()| {
+//         lua.create_any_userdata(this.clone().upcast::<gtk::LayoutManager>())
+//     });
+// }
 
 fn add_enums(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     let orientation = lua.create_table()?;
