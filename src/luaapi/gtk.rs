@@ -234,12 +234,68 @@ fn add_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         "new",
         lua.create_function(
             |lua, (orientation, spacing): (enums::Orientation, Option<i32>)| {
-                let button = gtk::Box::new(orientation.0, spacing.unwrap_or(0));
-                lua.create_any_userdata(button)
+                let gbox = gtk::Box::new(orientation.0, spacing.unwrap_or(0));
+                lua.create_any_userdata(gbox)
             },
         )?,
     )?;
     gtk_table.set("Box", gbox)?;
+
+    Ok(())
+}
+
+fn add_center_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+    lua.register_userdata_type::<gtk::CenterBox>(|reg| {
+        reg.add_method(
+            "set_start_widget",
+            |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
+                if let Some(udref) = child {
+                    this.set_start_widget(Some(&*udref));
+                } else {
+                    this.set_start_widget(None::<&gtk::Widget>);
+                }
+
+                Ok(())
+            },
+        );
+
+        reg.add_method(
+            "set_center_widget",
+            |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
+                if let Some(udref) = child {
+                    this.set_center_widget(Some(&*udref));
+                } else {
+                    this.set_center_widget(None::<&gtk::Widget>);
+                }
+
+                Ok(())
+            },
+        );
+
+        reg.add_method(
+            "set_end_widget",
+            |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
+                if let Some(udref) = child {
+                    this.set_end_widget(Some(&*udref));
+                } else {
+                    this.set_end_widget(None::<&gtk::Widget>);
+                }
+
+                Ok(())
+            },
+        );
+
+        add_widget_methods(reg);
+    })?;
+    let center_box = lua.create_table()?;
+    center_box.set(
+        "new",
+        lua.create_function(|lua, ()| {
+            let center_box = gtk::CenterBox::new();
+            lua.create_any_userdata(center_box)
+        })?,
+    )?;
+    gtk_table.set("CenterBox", center_box)?;
 
     Ok(())
 }
@@ -425,6 +481,7 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     add_label_api(lua, &gtk_table)?;
     add_button_api(lua, &gtk_table)?;
     add_box_api(lua, &gtk_table)?;
+    add_center_box_api(lua, &gtk_table)?;
     add_image_api(lua, &gtk_table)?;
     add_css_provider(lua, &gtk_table)?;
     add_context_api(lua, &gtk_table)?;
