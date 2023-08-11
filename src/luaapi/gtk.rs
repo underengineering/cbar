@@ -182,6 +182,11 @@ fn add_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             Ok(())
         });
 
+        reg.add_method("remove", |_, this, child: LuaUserDataRef<gtk::Widget>| {
+            this.remove(&*child);
+            Ok(())
+        });
+
         add_widget_methods(reg);
     })?;
     let gbox = lua.create_table()?;
