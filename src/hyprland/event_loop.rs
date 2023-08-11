@@ -32,11 +32,11 @@ impl EventLoop {
         })
     }
 
-    pub fn receiver(&self) -> broadcast::Receiver<Event> {
+    pub fn subscribe(&self) -> broadcast::Receiver<Event> {
         self.sender.subscribe()
     }
 
-    pub async fn next(&mut self) -> Result<Event, Error> {
+    async fn next(&mut self) -> Result<Event, Error> {
         let mut line = String::new();
         self.reader.read_line(&mut line).await?;
         let line = line.trim_end();

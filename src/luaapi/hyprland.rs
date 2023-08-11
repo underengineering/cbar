@@ -43,8 +43,8 @@ fn add_event_api(lua: &Lua, hyprland_table: &LuaTable) -> LuaResult<()> {
     })?;
 
     lua.register_userdata_type::<EventLoop>(|reg| {
-        reg.add_async_method_mut("receiver", |lua, this, ()| async move {
-            let receiver = this.receiver();
+        reg.add_async_method_mut("subscribe", |lua, this, ()| async move {
+            let receiver = this.subscribe();
             lua.create_any_userdata(receiver)
         });
 
