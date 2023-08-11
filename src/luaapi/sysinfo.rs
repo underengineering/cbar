@@ -160,7 +160,7 @@ fn add_system_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
             for (i, cpu) in cpus.iter().enumerate() {
                 let cpu_table = lua.create_table()?;
                 push_cpu(cpu, &cpu_table)?;
-                cpus_table.set(i, cpu_table)?;
+                cpus_table.set(i + 1, cpu_table)?;
             }
 
             Ok(cpus_table)
