@@ -43,7 +43,14 @@ fn add_event_api(lua: &Lua, hyprland_table: &LuaTable) -> LuaResult<()> {
     })?;
 
     lua.register_userdata_type::<EventLoop>(|reg| {
-        reg.add_async_method_mut("subscribe", |lua, this, ()| async move {
+        reg.add_async_method_mut("connect", |_, this, ()| async move {
+            this.connect()
+                .await
+                .expect("Failed to connect the event loop");
+            Ok(())
+        });
+
+        reg.add_method_mut("subscribe", |lua, this, ()| {
             let receiver = this.subscribe();
             lua.create_any_userdata(receiver)
         });
@@ -55,9 +62,9 @@ fn add_event_api(lua: &Lua, hyprland_table: &LuaTable) -> LuaResult<()> {
     })?;
     let event_loop = lua.create_table()?;
     event_loop.set(
-        "connect",
-        lua.create_async_function(|lua, ()| async move {
-            let event_loop = EventLoop::connect().await.unwrap();
+        "new",
+        lua.create_function(|lua, ()| {
+            let event_loop = EventLoop::new();
             lua.create_any_userdata(event_loop)
         })?,
     )?;

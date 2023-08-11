@@ -9,13 +9,24 @@ use super::error::Error;
 use super::events::{Event, ScreenCastOwner};
 
 pub struct EventLoop {
-    reader: BufReader<UnixStream>,
+    reader: Option<BufReader<UnixStream>>,
     sender: broadcast::Sender<Event>,
     _receiver: broadcast::Receiver<Event>,
 }
 
 impl EventLoop {
-    pub async fn connect() -> Result<Self, Error> {
+    /// Returns a new unconnected event loop
+    pub fn new() -> Self {
+        let (sender, receiver) = broadcast::channel(8);
+        Self {
+            reader: None,
+            sender,
+            _receiver: receiver,
+        }
+    }
+
+    /// Connects the event loop
+    pub async fn connect(&mut self) -> Result<(), Error> {
         let hyprctl_instance_sig = env::var("HYPRLAND_INSTANCE_SIGNATURE")
             .expect("Failed to get the hyprland instance signature");
 
@@ -23,12 +34,9 @@ impl EventLoop {
         let stream = UnixStream::connect(socket2_path).await?;
         let reader = BufReader::new(stream);
 
-        let (sender, receiver) = broadcast::channel(8);
-        Ok(Self {
-            reader,
-            sender,
-            _receiver: receiver,
-        })
+        self.reader = Some(reader);
+
+        Ok(())
     }
 
     pub fn subscribe(&self) -> broadcast::Receiver<Event> {
@@ -36,8 +44,13 @@ impl EventLoop {
     }
 
     async fn next(&mut self) -> Result<Event, Error> {
+        let reader = self
+            .reader
+            .as_mut()
+            .expect("Event loop must be connected before usage");
+
         let mut line = String::new();
-        self.reader.read_line(&mut line).await?;
+        reader.read_line(&mut line).await?;
         let line = line.trim_end();
 
         let (event_name, event_data) = line.split_once(">>").unwrap();
