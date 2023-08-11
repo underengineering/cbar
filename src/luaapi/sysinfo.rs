@@ -1,6 +1,8 @@
 use mlua::prelude::*;
+use paste::paste;
 use sysinfo::{
-    Cpu, CpuExt, CpuRefreshKind, NetworkExt, Pid, ProcessRefreshKind, System, SystemExt,
+    Cpu, CpuExt, CpuRefreshKind, NetworkExt, Pid, ProcessRefreshKind, RefreshKind, System,
+    SystemExt,
 };
 
 use crate::system_info::battery;
@@ -54,6 +56,50 @@ fn add_system_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
         })?,
     )?;
     sysinfo_table.set("ProcessRefreshKind", process_refresh_kind)?;
+
+    let refresh_kind = lua.create_table()?;
+    refresh_kind.set(
+        "new",
+        lua.create_function(|lua, specifics: LuaTable| {
+            let mut kind = RefreshKind::new();
+            macro_rules! with {
+                ($kind:ident) => {
+                    if specifics
+                        .get::<_, Option<bool>>(stringify!($kind))?
+                        .unwrap_or(false)
+                    {
+                        paste! {
+                            kind = kind.[<with_ $kind>]();
+                        }
+                    }
+                };
+            }
+
+            with!(networks);
+            with!(networks_list);
+            with!(disks);
+            with!(disks_list);
+            with!(memory);
+            with!(components);
+            with!(components_list);
+            with!(users_list);
+
+            if let Some(refresh_kind) =
+                specifics.get::<_, Option<LuaOwnedAnyUserData>>("processes")?
+            {
+                let refresh_kind = refresh_kind.take::<ProcessRefreshKind>()?;
+                kind = kind.with_processes(refresh_kind);
+            }
+
+            if let Some(refresh_kind) = specifics.get::<_, Option<LuaOwnedAnyUserData>>("cpu")? {
+                let refresh_kind = refresh_kind.take::<CpuRefreshKind>()?;
+                kind = kind.with_cpu(refresh_kind);
+            }
+
+            lua.create_any_userdata(kind)
+        })?,
+    )?;
+    sysinfo_table.set("RefreshKind", refresh_kind)?;
 
     lua.register_userdata_type::<System>(|reg| {
         // Refresh methods
@@ -237,6 +283,13 @@ fn add_system_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
         "new_all",
         lua.create_function(|lua, ()| {
             let system = System::new_all();
+            lua.create_any_userdata(system)
+        })?,
+    )?;
+    system.set(
+        "new_with_specifics",
+        lua.create_function(|lua, kind: LuaOwnedAnyUserData| {
+            let system = System::new_with_specifics(kind.take::<RefreshKind>()?);
             lua.create_any_userdata(system)
         })?,
     )?;
