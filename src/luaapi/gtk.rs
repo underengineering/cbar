@@ -377,16 +377,13 @@ fn add_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     layer_shell.set(
         "set_anchor",
         lua.create_function(
-            |_, (window, edge, anchor_to_edge): (LuaUserDataRef<ApplicationWindow>, i32, bool)| {
-                let edge = match edge {
-                    0 => gtk4_layer_shell::Edge::Left,
-                    1 => gtk4_layer_shell::Edge::Right,
-                    2 => gtk4_layer_shell::Edge::Top,
-                    3 => gtk4_layer_shell::Edge::Bottom,
-                    _ => panic!("Invalid edge specified"),
-                };
-
-                gtk4_layer_shell::set_anchor(&*window, edge, anchor_to_edge);
+            |_,
+             (window, edge, anchor_to_edge): (
+                LuaUserDataRef<ApplicationWindow>,
+                enums::Edge,
+                bool,
+            )| {
+                gtk4_layer_shell::set_anchor(&*window, edge.0, anchor_to_edge);
                 Ok(())
             },
         )?,
