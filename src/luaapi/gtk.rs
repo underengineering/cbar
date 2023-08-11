@@ -19,13 +19,10 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
         Ok(())
     });
 
-    reg.add_method(
-        "set_css_classes",
-        |_lua, this, classes: Variadic<String>| {
-            this.set_css_classes(&classes.iter().map(String::as_str).collect::<Vec<_>>());
-            Ok(())
-        },
-    );
+    reg.add_method("set_css_classes", |_lua, this, classes: Vec<String>| {
+        this.set_css_classes(&classes.iter().map(String::as_str).collect::<Vec<_>>());
+        Ok(())
+    });
 
     reg.add_method("set_valign", |_lua, this, align: enums::Align| {
         this.set_valign(align.0);
