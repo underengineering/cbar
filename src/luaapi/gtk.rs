@@ -1,8 +1,13 @@
 use gtk::{glib, prelude::*, Application, ApplicationWindow};
 use mlua::{prelude::*, Variadic};
-use paste::paste;
 
 use super::enums;
+
+macro_rules! push_enum {
+    ($tbl:ident, $ns:ident, $name:ident, [$($variant:ident),+]) => {
+        $($tbl.set(stringify!($variant), enums::$name($ns::$name::$variant))?;)+
+    };
+}
 
 fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'_, T>) {
     reg.add_method("upcast", |lua, this, ()| {
@@ -34,23 +39,12 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
 }
 
 fn add_enums(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    macro_rules! push_enum {
-        ($tbl:ident, $name:ident, $variant:ident) => {
-            $tbl.set(stringify!($variant), enums::$name(gtk::$name::$variant))?;
-        };
-    }
-
     let orientation = lua.create_table()?;
-    push_enum!(orientation, Orientation, Horizontal);
-    push_enum!(orientation, Orientation, Vertical);
+    push_enum!(orientation, gtk, Orientation, [Horizontal, Vertical]);
     gtk_table.set("Orientation", orientation)?;
 
     let align = lua.create_table()?;
-    push_enum!(align, Align, Fill);
-    push_enum!(align, Align, Start);
-    push_enum!(align, Align, End);
-    push_enum!(align, Align, Center);
-    push_enum!(align, Align, Baseline);
+    push_enum!(align, gtk, Align, [Fill, Start, End, Center, Baseline]);
     gtk_table.set("Align", align)?;
 
     // gtk_table.set("PRIORITY_LOW", glib::ffi::G_PRIORITY_LOW)?;
@@ -327,20 +321,16 @@ fn add_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     let layer_shell = lua.create_table()?;
 
     let layer = lua.create_table()?;
-    layer.set(
-        "Background",
-        enums::Layer(gtk4_layer_shell::Layer::Background),
-    )?;
-    layer.set("Bottom", enums::Layer(gtk4_layer_shell::Layer::Bottom))?;
-    layer.set("Top", enums::Layer(gtk4_layer_shell::Layer::Top))?;
-    layer.set("Overlay", enums::Layer(gtk4_layer_shell::Layer::Overlay))?;
+    push_enum!(
+        layer,
+        gtk4_layer_shell,
+        Layer,
+        [Background, Bottom, Top, Overlay]
+    );
     layer_shell.set("Layer", layer)?;
 
     let edge = lua.create_table()?;
-    edge.set("Left", enums::Edge(gtk4_layer_shell::Edge::Left))?;
-    edge.set("Right", enums::Edge(gtk4_layer_shell::Edge::Right))?;
-    edge.set("Top", enums::Edge(gtk4_layer_shell::Edge::Top))?;
-    edge.set("Bottom", enums::Edge(gtk4_layer_shell::Edge::Bottom))?;
+    push_enum!(edge, gtk4_layer_shell, Edge, [Left, Right, Top, Bottom]);
     layer_shell.set("Edge", edge)?;
 
     layer_shell.set(
