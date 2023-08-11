@@ -64,7 +64,8 @@ async fn main() -> Result<(), Error> {
     globals.set("gtk", gtk_table)?;
 
     let config = fs::read_to_string(&config_path)?;
-    lua.load(config).exec()?;
+    let file_name = config_path.file_name().unwrap().to_str().unwrap();
+    lua.load(config).set_name(file_name).exec()?;
 
     Ok(())
 }
