@@ -86,11 +86,6 @@ fn add_system_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
             },
         );
 
-        reg.add_method_mut("refresh_components", |_, this, ()| {
-            this.refresh_components();
-            Ok(())
-        });
-
         reg.add_method_mut("refresh_process", |_, this, pid: usize| {
             this.refresh_process(Pid::from(pid));
             Ok(())
