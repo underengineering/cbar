@@ -293,6 +293,7 @@ fn add_system_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
             lua.create_any_userdata(system)
         })?,
     )?;
+    sysinfo_table.set("System", system)?;
 
     Ok(())
 }
