@@ -36,6 +36,27 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
         this.set_halign(align.0);
         Ok(())
     });
+
+    reg.add_method(
+        "set_layout_manager",
+        |_, this, layout_manager: Option<LuaOwnedAnyUserData>| {
+            let layout_manager = match layout_manager {
+                Some(ud) => Some(ud.take::<gtk::LayoutManager>()?),
+                None => None,
+            };
+
+            this.set_layout_manager(layout_manager);
+            Ok(())
+        },
+    );
+}
+
+fn add_layout_manager_methods<T: glib::IsA<gtk::LayoutManager>>(
+    reg: &mut LuaUserDataRegistry<'_, T>,
+) {
+    reg.add_method("upcast", |lua, this, ()| {
+        lua.create_any_userdata(this.clone().upcast::<gtk::LayoutManager>())
+    });
 }
 
 fn add_enums(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
