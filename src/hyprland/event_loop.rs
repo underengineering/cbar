@@ -17,7 +17,7 @@ pub struct EventLoop {
 impl EventLoop {
     /// Returns a new unconnected event loop
     pub fn new() -> Self {
-        let (sender, receiver) = broadcast::channel(8);
+        let (sender, receiver) = broadcast::channel(24);
         Self {
             reader: None,
             sender,
