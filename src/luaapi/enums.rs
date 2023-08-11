@@ -114,3 +114,34 @@ impl Into<i32> for Edge {
 }
 
 impl_lua!(Edge);
+
+pub(super) struct Align(pub(super) gtk::Align);
+impl std::convert::TryFrom<i32> for Align {
+    type Error = Error;
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Align(gtk::Align::Fill)),
+            1 => Ok(Align(gtk::Align::Start)),
+            2 => Ok(Align(gtk::Align::End)),
+            3 => Ok(Align(gtk::Align::Center)),
+            4 => Ok(Align(gtk::Align::Baseline)),
+            _ => Err(Error::ConversionFailed),
+        }
+    }
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<i32> for Align {
+    fn into(self) -> i32 {
+        match self.0 {
+            gtk::Align::Fill => 0,
+            gtk::Align::Start => 1,
+            gtk::Align::End => 2,
+            gtk::Align::Center => 3,
+            gtk::Align::Baseline => 4,
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl_lua!(Align);

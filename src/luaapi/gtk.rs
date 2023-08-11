@@ -1,5 +1,6 @@
 use gtk::{glib, prelude::*, Application, ApplicationWindow};
 use mlua::{prelude::*, Variadic};
+use paste::paste;
 
 use super::enums;
 
@@ -20,16 +21,37 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
             Ok(())
         },
     );
+
+    reg.add_method("set_valign", |_lua, this, align: enums::Align| {
+        this.set_valign(align.0);
+        Ok(())
+    });
+
+    reg.add_method("set_halign", |_lua, this, align: enums::Align| {
+        this.set_halign(align.0);
+        Ok(())
+    });
 }
 
 fn add_enums(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+    macro_rules! push_enum {
+        ($tbl:ident, $name:ident, $variant:ident) => {
+            $tbl.set(stringify!($variant), enums::$name(gtk::$name::$variant))?;
+        };
+    }
+
     let orientation = lua.create_table()?;
-    orientation.set(
-        "Horizontal",
-        enums::Orientation(gtk::Orientation::Horizontal),
-    )?;
-    orientation.set("Vertical", enums::Orientation(gtk::Orientation::Vertical))?;
+    push_enum!(orientation, Orientation, Horizontal);
+    push_enum!(orientation, Orientation, Vertical);
     gtk_table.set("Orientation", orientation)?;
+
+    let align = lua.create_table()?;
+    push_enum!(align, Align, Fill);
+    push_enum!(align, Align, Start);
+    push_enum!(align, Align, End);
+    push_enum!(align, Align, Center);
+    push_enum!(align, Align, Baseline);
+    gtk_table.set("Align", align)?;
 
     // gtk_table.set("PRIORITY_LOW", glib::ffi::G_PRIORITY_LOW)?;
     // gtk_table.set("PRIORITY_DEFAULT", glib::ffi::G_PRIORITY_DEFAULT)?;
