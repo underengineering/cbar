@@ -37,8 +37,15 @@ fn add_ipc_api(lua: &Lua, hyprland_table: &LuaTable) -> LuaResult<()> {
 fn add_event_api(lua: &Lua, hyprland_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<broadcast::Receiver<Event>>(|reg| {
         reg.add_async_method_mut("recv", |lua, this, ()| async move {
-            let event = this.recv().await.unwrap();
-            lua.to_value(&event)
+            // Return nil when channel is lagged
+            println!("lag {}", this.len());
+            let ret = match this.recv().await {
+                Ok(event) => lua.to_value(&event)?,
+                Err(broadcast::error::RecvError::Lagged(_)) => LuaValue::Nil,
+                Err(err) => panic!("{:?}", err),
+            };
+
+            Ok(ret)
         });
     })?;
 
