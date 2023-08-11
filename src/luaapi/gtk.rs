@@ -8,12 +8,12 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
         lua.create_any_userdata(this.clone().upcast::<gtk::Widget>())
     });
 
-    reg.add_method("set_css_class", |lua, this, class: String| {
+    reg.add_method("set_css_class", |_lua, this, class: String| {
         this.add_css_class(&class);
         Ok(())
     });
 
-    reg.add_method("set_css_classes", |lua, this, classes: Variadic<String>| {
+    reg.add_method("set_css_classes", |_lua, this, classes: Variadic<String>| {
         this.set_css_classes(&classes.iter().map(String::as_str).collect::<Vec<_>>());
         Ok(())
     });

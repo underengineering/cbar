@@ -6,13 +6,12 @@ use tokio::{
 };
 
 use super::error::Error;
-
 use super::events::{Event, ScreenCastOwner};
 
 pub struct EventLoop {
     reader: BufReader<UnixStream>,
     sender: broadcast::Sender<Event>,
-    receiver: broadcast::Receiver<Event>,
+    _receiver: broadcast::Receiver<Event>,
 }
 
 impl EventLoop {
@@ -28,7 +27,7 @@ impl EventLoop {
         Ok(Self {
             reader,
             sender,
-            receiver,
+            _receiver: receiver,
         })
     }
 

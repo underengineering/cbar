@@ -1,10 +1,6 @@
-use std::collections::HashMap;
-
 use mlua::prelude::*;
-use serde::{Deserialize, Serialize};
 use sysinfo::{
-    Cpu, CpuExt, CpuRefreshKind, NetworkExt, NetworksExt, Pid, ProcessRefreshKind, System,
-    SystemExt,
+    Cpu, CpuExt, CpuRefreshKind, NetworkExt, Pid, ProcessRefreshKind, System, SystemExt,
 };
 
 use crate::system_info::battery;

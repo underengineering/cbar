@@ -24,7 +24,8 @@ impl Command for Vec<Workspace> {
 pub struct Mouse {
     pub address: String,
     pub name: String,
-    pub defaultSpeed: f32,
+    #[serde(rename = "defaultSpeed")]
+    pub default_speed: f32,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -51,7 +52,8 @@ pub struct Tablet {
     pub address: String,
     #[serde(rename = "type")]
     pub type_: String,
-    pub belongsTo: TabletOwner,
+    #[serde(rename = "belongsTo")]
+    pub belongs_to: TabletOwner,
 }
 
 #[derive(Serialize, Deserialize)]
