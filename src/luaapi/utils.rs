@@ -1,5 +1,6 @@
+use gtk::glib;
 use mlua::prelude::*;
-use tokio::time::{sleep, Duration};
+use std::time::Duration;
 
 fn add_grass_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
     utils_table.set(
@@ -71,7 +72,7 @@ fn add_tokio_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
     utils_table.set(
         "sleep",
         lua.create_async_function(|_, secs: f64| async move {
-            sleep(Duration::from_secs_f64(secs)).await;
+            glib::timeout_future(Duration::from_secs_f64(secs)).await;
             Ok(())
         })?,
     )?;

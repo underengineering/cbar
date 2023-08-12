@@ -1,15 +1,20 @@
-use std::env;
-use tokio::{
-    io::{AsyncBufReadExt, BufReader},
-    net::UnixStream,
-    sync::broadcast,
+use futures::io::{AsyncBufReadExt};
+use gtk::{
+    gio::{
+        IOStreamAsyncReadWrite, InputStreamAsyncBufRead, PollableInputStream,
+        SocketClient, SocketConnection, UnixSocketAddress,
+    },
+    prelude::*,
 };
+use std::{env, path::Path};
+use tokio::sync::broadcast;
 
 use super::error::Error;
 use super::events::{Event, ScreenCastOwner};
 
 pub struct EventLoop {
-    reader: Option<BufReader<UnixStream>>,
+    stream: Option<IOStreamAsyncReadWrite<SocketConnection>>,
+    reader: Option<InputStreamAsyncBufRead<PollableInputStream>>,
     sender: broadcast::Sender<Event>,
     _receiver: broadcast::Receiver<Event>,
 }
@@ -19,6 +24,7 @@ impl EventLoop {
     pub fn new() -> Self {
         let (sender, receiver) = broadcast::channel(24);
         Self {
+            stream: None,
             reader: None,
             sender,
             _receiver: receiver,
@@ -31,10 +37,17 @@ impl EventLoop {
             .expect("Failed to get the hyprland instance signature");
 
         let socket2_path = format!("/tmp/hypr/{hyprctl_instance_sig}/.socket2.sock");
-        let stream = UnixStream::connect(socket2_path).await?;
-        let reader = BufReader::new(stream);
+        let socket2_path = Path::new(&socket2_path);
 
-        self.reader = Some(reader);
+        let sock = SocketClient::new();
+        let conn = sock
+            .connect_future(&UnixSocketAddress::new(socket2_path))
+            .await
+            .unwrap();
+        let stream = conn.into_async_read_write().unwrap();
+
+        self.reader = Some(stream.input_stream().clone().into_async_buf_read(256));
+        self.stream = Some(stream);
 
         Ok(())
     }

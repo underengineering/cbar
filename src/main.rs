@@ -2,6 +2,7 @@ use std::{env, path::PathBuf};
 
 use clap::Parser;
 use gtk::Application;
+
 use mlua::prelude::*;
 use std::fs;
 
@@ -22,8 +23,7 @@ struct Args {
     config: Option<PathBuf>,
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Error> {
+fn main() -> Result<(), Error> {
     let args = Args::parse();
     let config_path = args.config.unwrap_or_else(|| {
         let mut path = PathBuf::from(env::var("HOME").expect("Failed to get the HOME variable"));
