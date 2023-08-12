@@ -14,6 +14,13 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
         lua.create_any_userdata(this.clone().upcast::<gtk::Widget>())
     });
 
+    reg.add_method("set_visible", |_, this, visible: bool| {
+        this.set_visible(visible);
+        Ok(())
+    });
+
+    reg.add_method("get_visible", |_, this, ()| Ok(this.get_visible()));
+
     reg.add_method("set_css_class", |_lua, this, class: String| {
         this.add_css_class(&class);
         Ok(())
@@ -277,6 +284,44 @@ fn add_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
+fn add_grid_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+    lua.register_userdata_type::<gtk::Grid>(|reg| {
+        reg.add_method(
+            "attach",
+            |_,
+             this,
+             (child, column, row, width, height): (
+                LuaUserDataRef<gtk::Widget>,
+                i32,
+                i32,
+                i32,
+                i32,
+            )| {
+                this.attach(&*child, column, row, width, height);
+                Ok(())
+            },
+        );
+
+        reg.add_method("remove", |_, this, child: LuaUserDataRef<gtk::Widget>| {
+            this.remove(&*child);
+            Ok(())
+        });
+
+        add_widget_methods(reg);
+    })?;
+    let grid = lua.create_table()?;
+    grid.set(
+        "new",
+        lua.create_function(|lua, ()| {
+            let grid = gtk::Grid::new();
+            lua.create_any_userdata(grid)
+        })?,
+    )?;
+    gtk_table.set("Grid", grid)?;
+
+    Ok(())
+}
+
 fn add_center_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::CenterBox>(|reg| {
         reg.add_method(
@@ -514,6 +559,7 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     add_label_api(lua, &gtk_table)?;
     add_button_api(lua, &gtk_table)?;
     add_box_api(lua, &gtk_table)?;
+    add_grid_api(lua, &gtk_table)?;
     add_center_box_api(lua, &gtk_table)?;
     add_image_api(lua, &gtk_table)?;
     add_css_provider(lua, &gtk_table)?;
