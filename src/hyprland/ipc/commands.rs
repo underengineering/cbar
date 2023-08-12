@@ -87,6 +87,7 @@ pub struct PartialWorkspace {
     pub name: String,
 }
 
+// XXX: this is unbelievably ugly
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct ActiveWindow {
     pub address: Option<String>,
@@ -117,4 +118,42 @@ pub struct ActiveWindow {
 
 impl Command for ActiveWindow {
     const NAME: &'static str = "activewindow";
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PartialWorkspaceId {
+    pub id: u64,
+    pub name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Monitor {
+    pub id: u64,
+    pub name: String,
+    pub description: String,
+    pub make: String,
+    pub model: String,
+    pub serial: String,
+    pub width: i32,
+    pub height: i32,
+    #[serde(rename = "refreshRate")]
+    pub refresh_rate: f32,
+    pub x: i32,
+    pub y: i32,
+    #[serde(rename = "activeWorkspace")]
+    pub active_workspace: PartialWorkspaceId,
+    #[serde(rename = "specialWorkspace")]
+    pub special_workspace: PartialWorkspaceId,
+    pub reserved: [i32; 4],
+    pub scale: f32,
+    pub transform: i32,
+    pub focused: bool,
+    #[serde(rename = "dpmsStatus")]
+    pub dpms_status: bool,
+    pub vrr: bool,
+}
+
+pub type Monitors = Vec<Monitor>;
+impl Command for Monitors {
+    const NAME: &'static str = "monitors";
 }

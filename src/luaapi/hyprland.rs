@@ -4,32 +4,27 @@ use crate::hyprland::{
     ipc::{self, commands::*},
 };
 use mlua::prelude::*;
+use paste::paste;
 use tokio::sync::broadcast;
 
-macro_rules! ipc_to_lua {
-   (match $obj:expr, lua = $lua:expr, buffer = $buffer:expr, [$($command:ty),+]) => {
-       match $obj {
-           $(<$command>::NAME => $lua.to_value(&ipc::request::<$command>($buffer).await.unwrap())?),*,
-            _ => panic!("Unknown ipc '{}'", $obj),
-       }
-   }
+macro_rules! push_ipc_methods {
+    ($lua:ident, $table:ident, [$($command:ty),+]) => {
+        $(
+            let fn_name = paste!(stringify!([<get_ $command:lower>]));
+            $table.set(fn_name,
+                $lua.create_async_function(|lua, ()| async move {
+                    let mut buffer = Vec::new();
+                    let resp = ipc::request::<$command>(&mut buffer).await.unwrap();
+                    lua.to_value(&resp)
+                })?)?;
+        )+
+    }
 }
 
 fn add_ipc_api(lua: &Lua, hyprland_table: &LuaTable) -> LuaResult<()> {
-    hyprland_table.set(
-        "ipc_request",
-        lua.create_async_function(|lua, name: String| async move {
-            let mut buffer = Vec::new();
-            let resp = ipc_to_lua! {
-                match name.as_str(),
-                lua = lua,
-                buffer = &mut buffer,
-                [Workspaces, Devices, ActiveWindow]
-            };
-
-            Ok(resp)
-        })?,
-    )?;
+    let ipc = lua.create_table()?;
+    push_ipc_methods!(lua, ipc, [Workspaces, Devices, ActiveWindow, Monitors]);
+    hyprland_table.set("ipc", ipc)?;
 
     Ok(())
 }
