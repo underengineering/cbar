@@ -162,6 +162,11 @@ fn add_application_window_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> 
             },
         );
 
+        reg.add_method("close", |_, this, ()| {
+            this.close();
+            Ok(())
+        });
+
         reg.add_method("present", |_, this, ()| {
             this.present();
             Ok(())
