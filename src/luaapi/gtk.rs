@@ -45,6 +45,14 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
     });
 
     reg.add_method(
+        "set_size_request",
+        |_, this, (width, height): (i32, i32)| {
+            this.set_size_request(width, height);
+            Ok(())
+        },
+    );
+
+    reg.add_method(
         "set_layout_manager",
         |_, this, layout_manager: Option<LuaOwnedAnyUserData>| {
             let layout_manager = match layout_manager {
