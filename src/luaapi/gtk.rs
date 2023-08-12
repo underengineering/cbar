@@ -209,6 +209,13 @@ fn add_button_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             lua.create_any_userdata(button)
         })?,
     )?;
+    button.set(
+        "with_label",
+        lua.create_function(|lua, label: String| {
+            let button = gtk::Button::with_label(&label);
+            lua.create_any_userdata(button)
+        })?,
+    )?;
     gtk_table.set("Button", button)?;
 
     Ok(())
