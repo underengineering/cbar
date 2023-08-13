@@ -1,7 +1,7 @@
 use clap::Parser;
-use gtk::{glib, Application};
+use gtk::Application;
 use mlua::prelude::*;
-use std::{cell::RefCell, env, fs, path::PathBuf, rc::Rc};
+use std::{env, fs, path::PathBuf};
 
 const APP_ID: &str = "org.gtk_rs.HelloWorld1";
 
