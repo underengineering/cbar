@@ -43,8 +43,8 @@ async fn try_request<T: Command>(buffer: &mut Vec<u8>) -> Result<(), Error> {
 pub async fn request<'a, T: Deserialize<'a> + Command>(
     buffer: &'a mut Vec<u8>,
 ) -> Result<T, Error> {
-    // 3 retries
-    for _ in 0..3 {
+    // 6 retries
+    for _ in 0..6 {
         match try_request::<T>(buffer).await {
             Ok(_) => return Ok(serde_json::from_slice(buffer)?),
             Err(Error::Io(err)) if err.kind() == io::ErrorKind::BrokenPipe => continue, // Retry
