@@ -85,15 +85,15 @@ fn add_system_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
             with!(users_list);
 
             if let Some(refresh_kind) =
-                specifics.get::<_, Option<LuaOwnedAnyUserData>>("processes")?
+                specifics.get::<_, Option<LuaUserDataRef<ProcessRefreshKind>>>("processes")?
             {
-                let refresh_kind = refresh_kind.take::<ProcessRefreshKind>()?;
-                kind = kind.with_processes(refresh_kind);
+                kind = kind.with_processes(*refresh_kind);
             }
 
-            if let Some(refresh_kind) = specifics.get::<_, Option<LuaOwnedAnyUserData>>("cpu")? {
-                let refresh_kind = refresh_kind.take::<CpuRefreshKind>()?;
-                kind = kind.with_cpu(refresh_kind);
+            if let Some(refresh_kind) =
+                specifics.get::<_, Option<LuaUserDataRef<CpuRefreshKind>>>("cpu")?
+            {
+                kind = kind.with_cpu(*refresh_kind);
             }
 
             lua.create_any_userdata(kind)
@@ -125,9 +125,8 @@ fn add_system_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
 
         reg.add_method_mut(
             "refresh_cpu_specifics",
-            |_, this, kind: LuaOwnedAnyUserData| {
-                let kind = kind.take::<CpuRefreshKind>()?;
-                this.refresh_cpu_specifics(kind);
+            |_, this, kind: LuaUserDataRef<CpuRefreshKind>| {
+                this.refresh_cpu_specifics(*kind);
                 Ok(())
             },
         );
@@ -139,18 +138,16 @@ fn add_system_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
 
         reg.add_method_mut(
             "refresh_processes_specifics",
-            |_, this, kind: LuaOwnedAnyUserData| {
-                let kind = kind.take::<ProcessRefreshKind>()?;
-                this.refresh_processes_specifics(kind);
+            |_, this, kind: LuaUserDataRef<ProcessRefreshKind>| {
+                this.refresh_processes_specifics(*kind);
                 Ok(())
             },
         );
 
         reg.add_method_mut(
             "refresh_process_specifics",
-            |_, this, (pid, kind): (usize, LuaOwnedAnyUserData)| {
-                let kind = kind.take::<ProcessRefreshKind>()?;
-                this.refresh_process_specifics(Pid::from(pid), kind);
+            |_, this, (pid, kind): (usize, LuaUserDataRef<ProcessRefreshKind>)| {
+                this.refresh_process_specifics(Pid::from(pid), *kind);
                 Ok(())
             },
         );
@@ -288,8 +285,8 @@ fn add_system_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
     )?;
     system.set(
         "new_with_specifics",
-        lua.create_function(|lua, kind: LuaOwnedAnyUserData| {
-            let system = System::new_with_specifics(kind.take::<RefreshKind>()?);
+        lua.create_function(|lua, kind: LuaUserDataRef<RefreshKind>| {
+            let system = System::new_with_specifics(*kind);
             lua.create_any_userdata(system)
         })?,
     )?;
