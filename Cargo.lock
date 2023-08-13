@@ -1057,7 +1057,8 @@ dependencies = [
 [[package]]
 name = "mlua"
 version = "0.9.0-rc.3"
-source = "git+https://github.com/khvzak/mlua.git?rev=c0c6a33f94127188a528801656effa89387880eb#c0c6a33f94127188a528801656effa89387880eb"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "01a6500a9fb74b519a85ac206cd57f9f91b270ce39d6cb12ab06a8ed29c3563d"
 dependencies = [
  "bstr",
  "erased-serde",
@@ -1073,7 +1074,8 @@ dependencies = [
 [[package]]
 name = "mlua-sys"
 version = "0.3.1"
-source = "git+https://github.com/khvzak/mlua.git?rev=c0c6a33f94127188a528801656effa89387880eb#c0c6a33f94127188a528801656effa89387880eb"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa5b61f6c943d77dd6ab5f670865670f65b978400127c8bf31c2df7d6e76289a"
 dependencies = [
  "cc",
  "cfg-if",
@@ -1447,9 +1449,9 @@ checksum = "b0293b4b29daaf487284529cc2f5675b8e57c61f70167ba415a463651fd6a918"
 
 [[package]]
 name = "serde"
-version = "1.0.183"
+version = "1.0.171"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32ac8da02677876d532745a130fc9d8e6edfa81a269b107c5b00829b91d8eb3c"
+checksum = "30e27d1e4fd7659406c492fd6cfaf2066ba8773de45ca75e855590f856dc34a9"
 dependencies = [
  "serde_derive",
 ]
@@ -1466,9 +1468,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.183"
+version = "1.0.171"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aafe972d60b0b9bee71a91b92fee2d4fb3c9d7e8f6b179aa99f27203d99a4816"
+checksum = "389894603bd18c46fa56231694f8d827779c0951a667087194cf9de94ed24682"
 dependencies = [
  "proc-macro2",
  "quote",

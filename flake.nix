@@ -106,6 +106,28 @@
                     inherit buildInputs nativeBuildInputs;
                   }
                   // buildEnvVars;
+                mlua-sys = oldAttrs: {
+                  buildInputs = [pkgs.luajit];
+                  nativeBuildInputs = [pkgs.pkgconfig];
+                };
+                gobject-sys = oldAttrs: {
+                  buildInputs = [pkgs.gtk4];
+                  nativeBuildInputs = [pkgs.pkgconfig];
+                };
+                gio-sys = oldAttrs: {
+                  buildInputs = [pkgs.gtk4];
+                  nativeBuildInputs = [pkgs.pkgconfig];
+                };
+                gdk-pixbuf-sys = oldAttrs: {
+                  buildInputs = [pkgs.gtk4];
+                  nativeBuildInputs = [pkgs.pkgconfig];
+                };
+                gtk4-layer-shell-sys = oldAttrs: {
+                  buildInputs = [
+                    gtk4-layer-shell.defaultPackage.${system}
+                  ];
+                  nativeBuildInputs = [pkgs.pkgconfig];
+                };
               };
           };
 
