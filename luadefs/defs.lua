@@ -1,0 +1,5 @@
+---@module 'gtk.lua'
+---@module 'hyprland.lua'
+---@module 'utils.lua'
+---@module 'sysinfo.lua'
+---@module 'pulseaudio.lua'
