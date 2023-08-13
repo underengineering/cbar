@@ -19,15 +19,17 @@ mlua = { git = "https://github.com/khvzak/mlua.git", rev = "c0c6a33f94127188a528
     "serialize",
 ] }
 chrono = "0.4.26"
+clap = { version = "4.3.21", features = ["derive"] }
 freedesktop-icons = "0.2.3"
+futures = "0.3.28"
 grass = "0.13.1"
 gtk = { version = "0.6.6", package = "gtk4", features = ["v4_10"] }
 gtk4-layer-shell = "0.0.3"
+paste = "1.0.14"
+pulse = { version = "2.28.1", package = "libpulse-binding" }
+pulse_glib = { version = "2.28.1", package = "libpulse-glib-binding" }
 serde = { version = "1.0.183", features = ["derive"] }
 serde_json = "1.0.104"
 sysinfo = "0.29.7"
 thiserror = "1.0.44"
 tokio = { version = "1.29.1", features = ["sync"] }
-clap = { version = "4.3.21", features = ["derive"] }
-paste = "1.0.14"
-futures = "0.3.28"

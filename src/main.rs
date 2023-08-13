@@ -1,10 +1,7 @@
-use std::{env, path::PathBuf};
-
 use clap::Parser;
-use gtk::Application;
-
+use gtk::{glib, Application};
 use mlua::prelude::*;
-use std::fs;
+use std::{cell::RefCell, env, fs, path::PathBuf, rc::Rc};
 
 const APP_ID: &str = "org.gtk_rs.HelloWorld1";
 
@@ -47,9 +44,11 @@ fn main() -> Result<(), Error> {
     let utils_table = luaapi::utils::add_api(&lua)?;
     let hyprland_table = luaapi::hyprland::add_api(&lua)?;
     let sysinfo_table = luaapi::sysinfo::add_api(&lua)?;
+    let pulseaudio_table = luaapi::pulseaudio::add_api(&lua)?;
     globals.set("utils", utils_table)?;
     globals.set("hyprland", hyprland_table)?;
     globals.set("sysinfo", sysinfo_table)?;
+    globals.set("pulseaudio", pulseaudio_table)?;
 
     // Set current directory to the config path
     env::set_current_dir(
