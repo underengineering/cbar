@@ -327,12 +327,7 @@ fn add_center_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         reg.add_method(
             "set_start_widget",
             |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
-                if let Some(udref) = child {
-                    this.set_start_widget(Some(&*udref));
-                } else {
-                    this.set_start_widget(None::<&gtk::Widget>);
-                }
-
+                this.set_start_widget(child.as_deref());
                 Ok(())
             },
         );
@@ -340,12 +335,7 @@ fn add_center_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         reg.add_method(
             "set_center_widget",
             |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
-                if let Some(udref) = child {
-                    this.set_center_widget(Some(&*udref));
-                } else {
-                    this.set_center_widget(None::<&gtk::Widget>);
-                }
-
+                this.set_center_widget(child.as_deref());
                 Ok(())
             },
         );
@@ -353,12 +343,7 @@ fn add_center_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         reg.add_method(
             "set_end_widget",
             |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
-                if let Some(udref) = child {
-                    this.set_end_widget(Some(&*udref));
-                } else {
-                    this.set_end_widget(None::<&gtk::Widget>);
-                }
-
+                this.set_end_widget(child.as_deref());
                 Ok(())
             },
         );
