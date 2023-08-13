@@ -32,7 +32,7 @@ impl<'lua> IntoLua<'lua> for ChannelVolumesWrapper {
     fn into_lua(self, lua: &'lua Lua) -> LuaResult<LuaValue<'lua>> {
         let table = lua.create_table_with_capacity(self.0.len() as usize, 0)?;
         for (idx, volume) in self.0.get().iter().enumerate() {
-            table.set(idx, volume.0 as i64)?;
+            table.set(idx + 1, volume.0 as i64)?;
         }
 
         Ok(LuaValue::Table(table))
