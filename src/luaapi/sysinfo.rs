@@ -202,9 +202,9 @@ fn add_system_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
 
         reg.add_method("cpus", |lua, this, ()| {
             let cpus = this.cpus();
-            let cpus_table = lua.create_table()?;
+            let cpus_table = lua.create_table_with_capacity(cpus.len(), 0)?;
             for (i, cpu) in cpus.iter().enumerate() {
-                let cpu_table = lua.create_table()?;
+                let cpu_table = lua.create_table_with_capacity(0, 5)?;
                 push_cpu(cpu, &cpu_table)?;
                 cpus_table.set(i + 1, cpu_table)?;
             }
@@ -251,7 +251,7 @@ fn add_system_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
         reg.add_method("networks", |lua, this, ()| {
             let networks_table = lua.create_table()?;
             for (iface, data) in this.networks() {
-                let data_table = lua.create_table()?;
+                let data_table = lua.create_table_with_capacity(0, 13)?;
                 macro_rules! copy_fields {
                     ($name:ident) => {
                         data_table.set(stringify!($name), data.$name())?;
