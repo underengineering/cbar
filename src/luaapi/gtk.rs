@@ -156,15 +156,15 @@ fn add_application_api(lua: &Lua) -> LuaResult<()> {
 
 fn add_application_window_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<ApplicationWindow>(|reg| {
-        reg.add_method("set_title", |_, this, title: String| {
-            this.set_title(Some(&title));
+        reg.add_method("set_title", |_, this, title: Option<String>| {
+            this.set_title(title.as_deref());
             Ok(())
         });
 
         reg.add_method(
             "set_child",
-            |_, this, child: LuaUserDataRef<gtk::Widget>| {
-                this.set_child(Some(&*child));
+            |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
+                this.set_child(child.as_deref());
                 Ok(())
             },
         );
