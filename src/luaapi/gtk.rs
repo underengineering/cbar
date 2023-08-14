@@ -257,10 +257,28 @@ fn add_label_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
 fn add_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::Box>(|reg| {
+        reg.add_method("prepend", |_, this, child: LuaUserDataRef<gtk::Widget>| {
+            this.prepend(&*child);
+            Ok(())
+        });
+
         reg.add_method("append", |_, this, child: LuaUserDataRef<gtk::Widget>| {
             this.append(&*child);
             Ok(())
         });
+
+        reg.add_method(
+            "reorder_child_after",
+            |_,
+             this,
+             (child, sibling): (
+                LuaUserDataRef<gtk::Widget>,
+                Option<LuaUserDataRef<gtk::Widget>>,
+            )| {
+                this.reorder_child_after(&*child, sibling.as_deref());
+                Ok(())
+            },
+        );
 
         reg.add_method("remove", |_, this, child: LuaUserDataRef<gtk::Widget>| {
             this.remove(&*child);
