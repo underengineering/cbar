@@ -57,7 +57,9 @@ fn add_event_api(lua: &Lua, hyprland_table: &LuaTable) -> LuaResult<()> {
         });
 
         reg.add_async_method_mut("run", |_, this, ()| async move {
-            this.run().await.unwrap();
+            this.run()
+                .await
+                .expect("Error while running hyprland event loop");
             Ok(())
         });
     })?;

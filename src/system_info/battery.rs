@@ -17,10 +17,12 @@ pub struct Batteries {
 
 pub fn is_on_ac() -> bool {
     let power_supply_dir = Path::new("/sys/class/power_supply");
-    let power_supplies = power_supply_dir.read_dir().unwrap();
+    let power_supplies = power_supply_dir
+        .read_dir()
+        .expect("Failed to read /sys/class/power_supply/");
 
     for entry in power_supplies {
-        let entry = entry.unwrap().path();
+        let entry = entry.expect("Failed to get power supply entry").path();
 
         // Skip batteries
         if read_to_string(entry.join("type"))
@@ -63,14 +65,16 @@ pub fn get_batteries() -> Batteries {
     let on_ac = is_on_ac();
 
     let power_supply_dir = Path::new("/sys/class/power_supply");
-    let power_supplies = power_supply_dir.read_dir().unwrap();
+    let power_supplies = power_supply_dir
+        .read_dir()
+        .expect("Failed to read /sys/class/power_supply/");
 
     let mut total_capacity = 0;
     let mut full_total = 0.0;
     let mut now_total = 0.0;
     let mut current_total = 0.0;
     for entry in power_supplies {
-        let entry = entry.unwrap().path();
+        let entry = entry.expect("Failed to get power supply entry").path();
 
         // Skip non-batteries
         if read_to_string(entry.join("type"))
@@ -81,36 +85,36 @@ pub fn get_batteries() -> Batteries {
         }
 
         let capacity = read_to_string(entry.join("capacity"))
-            .unwrap()
+            .expect("Failed to read battery capacity")
             .trim_end_matches('\n')
             .parse::<i32>()
-            .unwrap();
+            .expect("Failed to parse battery capacity");
 
         let status = read_to_string(entry.join("status"))
-            .unwrap()
+            .expect("Failed to read battery status")
             .trim_end_matches('\n')
             .to_owned();
 
         let full = read_to_string(entry.join("energy_full"))
             .or_else(|_| read_to_string(entry.join("charge_full")))
-            .unwrap()
+            .expect("Failed to read battery full charge")
             .trim_end_matches('\n')
             .parse::<f64>()
-            .unwrap();
+            .expect("Failed to parse battery full charge");
 
         let now = read_to_string(entry.join("energy_now"))
             .or_else(|_| read_to_string(entry.join("charge_now")))
-            .unwrap()
+            .expect("Failed to read battery current charge")
             .trim_end_matches('\n')
             .parse::<f64>()
-            .unwrap();
+            .expect("Failed to parse battery current charge");
 
         let current = read_to_string(entry.join("power_now"))
             .or_else(|_| read_to_string(entry.join("current_now")))
-            .unwrap()
+            .expect("Failed to read battery current")
             .trim_end_matches('\n')
             .parse::<f64>()
-            .unwrap();
+            .expect("Failed to parse battery current");
 
         total_capacity += capacity;
         full_total += full;
@@ -119,7 +123,11 @@ pub fn get_batteries() -> Batteries {
 
         let remaining_time = battery_time(on_ac, full, now, current);
         batteries.insert(
-            entry.file_name().unwrap().to_string_lossy().to_string(),
+            entry
+                .file_name()
+                .expect("Failed to get battery name")
+                .to_string_lossy()
+                .to_string(),
             BatteryInfo {
                 capacity,
                 remaining_time,

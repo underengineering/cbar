@@ -13,7 +13,10 @@ macro_rules! impl_lua {
         impl<'lua> FromLua<'lua> for $typ {
             fn from_lua(value: LuaValue<'lua>, _lua: &'lua Lua) -> LuaResult<Self> {
                 if let LuaValue::Integer(value) = value {
-                    Ok(<$typ>::try_from(value as i32).unwrap())
+                    Ok(
+                        <$typ>::try_from(value as i32)
+                            .expect("Failed to convert enum from integer"),
+                    )
                 } else {
                     panic!(
                         "Invalid type for enum '{}', expected number, got: {:?}",
