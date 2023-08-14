@@ -128,6 +128,18 @@
                   ];
                   nativeBuildInputs = [pkgs.pkgconfig];
                 };
+                libpulse-sys = oldAttrs: {
+                  buildInputs = [
+                    pkgs.libpulseaudio
+                  ];
+                  nativeBuildInputs = [pkgs.pkgconfig];
+                };
+                libpulse-mainloop-glib-sys = oldAttrs: {
+                  buildInputs = [
+                    pkgs.libpulseaudio
+                  ];
+                  nativeBuildInputs = [pkgs.pkgconfig];
+                };
               };
           };
 
