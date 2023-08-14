@@ -86,7 +86,10 @@ pub fn get_batteries() -> Batteries {
             .parse::<i32>()
             .unwrap();
 
-        let status = read_to_string(entry.join("status")).unwrap();
+        let status = read_to_string(entry.join("status"))
+            .unwrap()
+            .trim_end_matches('\n')
+            .to_owned();
 
         let full = read_to_string(entry.join("energy_full"))
             .or_else(|_| read_to_string(entry.join("charge_full")))
