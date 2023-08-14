@@ -122,7 +122,7 @@ gtk.ApplicationWindow = {
 ---@class Box : WidgetImpl
 gtk.Box = {
     ---@param orientation Orientation
-    ---@param spacing number
+    ---@param spacing number?
     ---@return Box
     new = function(orientation, spacing) end,
 
