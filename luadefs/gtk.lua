@@ -232,17 +232,14 @@ gtk.Image = {
 
     ---@param self Image
     ---@param pixel_size integer
-    ---@return Image
     set_pixel_size = function(self, pixel_size) end,
 
     ---@param self Image
     ---@param path string
-    ---@return Image
     set_from_file = function(self, path) end,
 
     ---@param self Image
     ---@param icon_name string
-    ---@return Image
     set_from_icon_name = function(self, icon_name) end,
 }
 
