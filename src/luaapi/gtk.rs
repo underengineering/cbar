@@ -9,6 +9,21 @@ macro_rules! push_enum {
     };
 }
 
+macro_rules! register_signals {
+    ($reg: ident, [$($signal:ident),+]) => {
+    $(
+        paste::paste! {
+            $reg.add_method(stringify!([<connect_ $signal>]), |_, this, f: LuaOwnedFunction| {
+                this.[<connect_ $signal>](move |_| {
+                    f.call::<_, ()>(()).unwrap();
+                });
+                Ok(())
+            });
+        }
+    )+
+    };
+}
+
 fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'_, T>) {
     reg.add_method("upcast", |lua, this, ()| {
         lua.create_any_userdata(this.clone().upcast::<gtk::Widget>())
@@ -136,26 +151,7 @@ fn add_global_functions(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
 fn add_application_api(lua: &Lua) -> LuaResult<()> {
     lua.register_userdata_type::<Application>(|reg| {
-        reg.add_method("connect_activate", |_, this, f: LuaOwnedFunction| {
-            this.connect_activate(move |_| {
-                f.call::<_, ()>(()).unwrap();
-            });
-            Ok(())
-        });
-
-        reg.add_method("connect_startup", |_, this, f: LuaOwnedFunction| {
-            this.connect_startup(move |_| {
-                f.call::<_, ()>(()).unwrap();
-            });
-            Ok(())
-        });
-
-        reg.add_method("connect_shutdown", |_, this, f: LuaOwnedFunction| {
-            this.connect_shutdown(move |_| {
-                f.call::<_, ()>(()).unwrap();
-            });
-            Ok(())
-        });
+        register_signals!(reg, [activate, startup, shutdown]);
 
         reg.add_method("run", |_, this, ()| {
             this.run_with_args(&[""]);
@@ -208,10 +204,7 @@ fn add_application_window_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> 
 
 fn add_button_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::Button>(|reg| {
-        reg.add_method("connect_clicked", |_, this, f: LuaOwnedFunction| {
-            this.connect_clicked(move |_| f.call::<_, ()>(()).unwrap());
-            Ok(())
-        });
+        register_signals!(reg, [clicked]);
 
         reg.add_method("set_label", |_, this, label: String| {
             this.set_label(&label);
