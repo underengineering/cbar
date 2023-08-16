@@ -15,18 +15,35 @@ use crate::error::Error;
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Args {
-    /// Path to the lua file to execute. Defaults to $HOME/.config/cbar/main.lua
+    /// Path to the lua file to execute.
+    /// A default config path will be prepended if it's relative
+    /// Defaults to $HOME/.config/cbar/main.lua
     #[arg(short, long)]
     config: Option<PathBuf>,
 }
 
 fn main() -> Result<(), Error> {
     let args = Args::parse();
-    let config_path = args.config.unwrap_or_else(|| {
-        let mut path = PathBuf::from(env::var("HOME").expect("Failed to get the HOME variable"));
-        path.push(".config/cbar/main.lua");
-        path
-    });
+    let config_path = args
+        .config
+        .map(|path| {
+            if path.is_relative() {
+                let mut abs_path =
+                    PathBuf::from(env::var("HOME").expect("Failed to get the HOME variable"));
+                abs_path.push(".config/cbar");
+                abs_path.push(path);
+
+                abs_path
+            } else {
+                path
+            }
+        })
+        .unwrap_or_else(|| {
+            let mut path =
+                PathBuf::from(env::var("HOME").expect("Failed to get the HOME variable"));
+            path.push(".config/cbar/main.lua");
+            path
+        });
 
     if !config_path.try_exists()? {
         return Err(Error::ConfigFileDoesNotExist);
