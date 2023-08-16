@@ -40,8 +40,8 @@ impl std::convert::TryFrom<i32> for Orientation {
     type Error = Error;
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Orientation(gtk::Orientation::Horizontal)),
-            1 => Ok(Orientation(gtk::Orientation::Vertical)),
+            0 => Ok(Self(gtk::Orientation::Horizontal)),
+            1 => Ok(Self(gtk::Orientation::Vertical)),
             _ => Err(Error::ConversionFailed),
         }
     }
@@ -65,10 +65,10 @@ impl std::convert::TryFrom<i32> for Layer {
     type Error = Error;
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Layer(gtk4_layer_shell::Layer::Background)),
-            1 => Ok(Layer(gtk4_layer_shell::Layer::Bottom)),
-            2 => Ok(Layer(gtk4_layer_shell::Layer::Top)),
-            3 => Ok(Layer(gtk4_layer_shell::Layer::Overlay)),
+            0 => Ok(Self(gtk4_layer_shell::Layer::Background)),
+            1 => Ok(Self(gtk4_layer_shell::Layer::Bottom)),
+            2 => Ok(Self(gtk4_layer_shell::Layer::Top)),
+            3 => Ok(Self(gtk4_layer_shell::Layer::Overlay)),
             _ => Err(Error::ConversionFailed),
         }
     }
@@ -94,10 +94,10 @@ impl std::convert::TryFrom<i32> for Edge {
     type Error = Error;
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Edge(gtk4_layer_shell::Edge::Left)),
-            1 => Ok(Edge(gtk4_layer_shell::Edge::Right)),
-            2 => Ok(Edge(gtk4_layer_shell::Edge::Top)),
-            3 => Ok(Edge(gtk4_layer_shell::Edge::Bottom)),
+            0 => Ok(Self(gtk4_layer_shell::Edge::Left)),
+            1 => Ok(Self(gtk4_layer_shell::Edge::Right)),
+            2 => Ok(Self(gtk4_layer_shell::Edge::Top)),
+            3 => Ok(Self(gtk4_layer_shell::Edge::Bottom)),
             _ => Err(Error::ConversionFailed),
         }
     }
@@ -123,11 +123,11 @@ impl std::convert::TryFrom<i32> for Align {
     type Error = Error;
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Align(gtk::Align::Fill)),
-            1 => Ok(Align(gtk::Align::Start)),
-            2 => Ok(Align(gtk::Align::End)),
-            3 => Ok(Align(gtk::Align::Center)),
-            4 => Ok(Align(gtk::Align::Baseline)),
+            0 => Ok(Self(gtk::Align::Fill)),
+            1 => Ok(Self(gtk::Align::Start)),
+            2 => Ok(Self(gtk::Align::End)),
+            3 => Ok(Self(gtk::Align::Center)),
+            4 => Ok(Self(gtk::Align::Baseline)),
             _ => Err(Error::ConversionFailed),
         }
     }
@@ -148,3 +148,43 @@ impl Into<i32> for Align {
 }
 
 impl_lua!(Align);
+
+pub(super) struct RevealerTransitionType(pub(super) gtk::RevealerTransitionType);
+impl std::convert::TryFrom<i32> for RevealerTransitionType {
+    type Error = Error;
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self(gtk::RevealerTransitionType::None)),
+            1 => Ok(Self(gtk::RevealerTransitionType::Crossfade)),
+            2 => Ok(Self(gtk::RevealerTransitionType::SlideRight)),
+            3 => Ok(Self(gtk::RevealerTransitionType::SlideLeft)),
+            4 => Ok(Self(gtk::RevealerTransitionType::SlideUp)),
+            5 => Ok(Self(gtk::RevealerTransitionType::SlideDown)),
+            6 => Ok(Self(gtk::RevealerTransitionType::SwingRight)),
+            7 => Ok(Self(gtk::RevealerTransitionType::SwingLeft)),
+            8 => Ok(Self(gtk::RevealerTransitionType::SwingUp)),
+            9 => Ok(Self(gtk::RevealerTransitionType::SwingDown)),
+            _ => Err(Error::ConversionFailed),
+        }
+    }
+}
+#[allow(clippy::from_over_into)]
+impl Into<i32> for RevealerTransitionType {
+    fn into(self) -> i32 {
+        match self.0 {
+            gtk::RevealerTransitionType::None => 0,
+            gtk::RevealerTransitionType::Crossfade => 1,
+            gtk::RevealerTransitionType::SlideRight => 2,
+            gtk::RevealerTransitionType::SlideLeft => 3,
+            gtk::RevealerTransitionType::SlideUp => 4,
+            gtk::RevealerTransitionType::SlideDown => 5,
+            gtk::RevealerTransitionType::SwingRight => 6,
+            gtk::RevealerTransitionType::SwingLeft => 7,
+            gtk::RevealerTransitionType::SwingUp => 8,
+            gtk::RevealerTransitionType::SwingDown => 9,
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl_lua!(RevealerTransitionType);

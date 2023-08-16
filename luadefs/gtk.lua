@@ -1,16 +1,16 @@
 ---@diagnostic disable:missing-return
 ---@diagnostic disable:lowercase-global
 ---@diagnostic disable:unused-local
-gtk             = {}
+gtk                        = {}
 
 ---@enum Orientation
-gtk.Orientation = {
+gtk.Orientation            = {
     Horizontal = 0,
     Vertical = 1,
 }
 
 ---@enum Align
-gtk.Align       = {
+gtk.Align                  = {
     Fill = 0,
     Start = 1,
     End = 2,
@@ -18,8 +18,22 @@ gtk.Align       = {
     Baseline = 4,
 }
 
+---@enum RevealerTransitionType
+gtk.RevealerTransitionType = {
+    None = 0,
+    Crossfade = 1,
+    SlideRight = 2,
+    SlideLeft = 3,
+    SlideUp = 4,
+    SlideDown = 5,
+    SwingRight = 6,
+    SwingLeft = 7,
+    SwingUp = 8,
+    SwingDown = 9
+}
+
 ---@class MainContext
-gtk.MainContext = {
+gtk.MainContext            = {
     ---@return MainContext
     default = function() end,
 
@@ -29,7 +43,7 @@ gtk.MainContext = {
 }
 
 ---@class Application
-gtk.Application = {
+gtk.Application            = {
     ---@param self Application
     ---@param callback fun():nil
     connect_activate = function(self, callback) end,
@@ -39,7 +53,7 @@ gtk.Application = {
 }
 
 ---@type Application
-gtk.app         = nil
+gtk.app                    = nil
 
 
 ---@class WidgetImpl
@@ -230,6 +244,28 @@ gtk.Image = {
     ---@param icon_name string
     ---@return Image
     set_from_icon_name = function(self, icon_name) end,
+}
+
+---@class Revealer : WidgetImpl
+gtk.Revealer = {
+    ---@return Revealer
+    new = function() end,
+
+    ---@param self Revealer
+    ---@param child Widget
+    set_child = function(self, child) end,
+
+    ---@param self Revealer
+    ---@param reveal_child boolean
+    set_reveal_child = function(self, reveal_child) end,
+
+    ---@param self Revealer
+    ---@param duration integer
+    set_transition_duration = function(self, duration) end,
+
+    ---@param self Revealer
+    ---@param transition RevealerTransitionType
+    set_transition_type = function(self, transition) end,
 }
 
 ---@class CssProvider

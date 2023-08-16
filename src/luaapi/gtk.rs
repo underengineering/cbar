@@ -96,6 +96,18 @@ fn add_enums(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     push_enum!(align, gtk, Align, [Fill, Start, End, Center, Baseline]);
     gtk_table.set("Align", align)?;
 
+    let transition_type = lua.create_table()?;
+    push_enum!(
+        transition_type,
+        gtk,
+        RevealerTransitionType,
+        [
+            None, Crossfade, SlideRight, SlideLeft, SlideUp, SlideDown, SwingRight, SwingLeft,
+            SwingUp, SwingDown
+        ]
+    );
+    gtk_table.set("RevealerTransitionType", transition_type)?;
+
     // gtk_table.set("PRIORITY_LOW", glib::ffi::G_PRIORITY_LOW)?;
     // gtk_table.set("PRIORITY_DEFAULT", glib::ffi::G_PRIORITY_DEFAULT)?;
     // gtk_table.set("PRIORITY_DEFAULT_IDLE", glib::ffi::G_PRIORITY_DEFAULT_IDLE)?;
@@ -430,6 +442,49 @@ fn add_image_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
+fn add_revealer_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+    lua.register_userdata_type::<gtk::Revealer>(|reg| {
+        reg.add_method(
+            "set_child",
+            |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
+                this.set_child(child.as_deref());
+                Ok(())
+            },
+        );
+
+        reg.add_method("set_reveal_child", |_, this, reveal_child: bool| {
+            this.set_reveal_child(reveal_child);
+            Ok(())
+        });
+
+        reg.add_method("set_transition_duration", |_, this, duration: u32| {
+            this.set_transition_duration(duration);
+            Ok(())
+        });
+
+        reg.add_method(
+            "set_transition_type",
+            |_, this, transition: enums::RevealerTransitionType| {
+                this.set_transition_type(transition.0);
+                Ok(())
+            },
+        );
+
+        add_widget_methods(reg);
+    })?;
+    let revealer = lua.create_table()?;
+    revealer.set(
+        "new",
+        lua.create_function(|lua, ()| {
+            let image = gtk::Revealer::new();
+            lua.create_any_userdata(image)
+        })?,
+    )?;
+    gtk_table.set("Revealer", revealer)?;
+
+    Ok(())
+}
+
 fn add_css_provider(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::CssProvider>(|reg| {
         reg.add_method("load_from_data", |_, this, data: String| {
@@ -565,6 +620,7 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     add_grid_api(lua, &gtk_table)?;
     add_center_box_api(lua, &gtk_table)?;
     add_image_api(lua, &gtk_table)?;
+    add_revealer_api(lua, &gtk_table)?;
     add_css_provider(lua, &gtk_table)?;
     add_context_api(lua, &gtk_table)?;
     add_layer_shell_api(lua, &gtk_table)?;
