@@ -1,5 +1,11 @@
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fs::read_to_string, path::Path, time::Duration};
+use std::{
+    collections::HashMap,
+    fs::{read_to_string, File},
+    io::{self, Read},
+    path::{Path, PathBuf},
+    time::Duration,
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BatteryInfo {
@@ -15,24 +21,32 @@ pub struct Batteries {
     pub remaining_time: Duration,
 }
 
+fn read_to_string_buf<P: AsRef<Path>>(path: P, buffer: &mut String) -> io::Result<&mut String> {
+    let mut file = File::open(path)?;
+    buffer.clear();
+    file.read_to_string(buffer)?;
+    Ok(buffer)
+}
+
 pub fn is_on_ac() -> bool {
     let power_supply_dir = Path::new("/sys/class/power_supply");
     let power_supplies = power_supply_dir
         .read_dir()
         .expect("Failed to read /sys/class/power_supply/");
 
+    let mut buffer = String::with_capacity(16);
     for entry in power_supplies {
         let entry = entry.expect("Failed to get power supply entry").path();
 
         // Skip batteries
-        if read_to_string(entry.join("type"))
+        if read_to_string_buf(entry.join("type"), &mut buffer)
             .map(|t| t != "Mains\n")
             .unwrap_or(true)
         {
             continue;
         }
 
-        if read_to_string(entry.join("online"))
+        if read_to_string_buf(entry.join("online"), &mut buffer)
             .map(|value| value == "1\n")
             .unwrap_or(false)
         {
@@ -73,27 +87,31 @@ pub fn get_batteries() -> Batteries {
     let mut full_total = 0.0;
     let mut now_total = 0.0;
     let mut current_total = 0.0;
+    let mut buffer = String::with_capacity(16);
     for entry in power_supplies {
         let entry = entry.expect("Failed to get power supply entry").path();
 
         // Skip non-batteries
-        if read_to_string(entry.join("type"))
+        if read_to_string_buf(entry.join("type"), &mut buffer)
             .map(|t| t != "Battery\n")
             .unwrap_or(true)
         {
             continue;
         }
 
-        let capacity = read_to_string(entry.join("capacity"))
+        let capacity = read_to_string_buf(entry.join("capacity"), &mut buffer)
             .expect("Failed to read battery capacity")
             .trim_end_matches('\n')
             .parse::<i32>()
             .expect("Failed to parse battery capacity");
 
-        let status = read_to_string(entry.join("status"))
-            .expect("Failed to read battery status")
-            .trim_end_matches('\n')
-            .to_owned();
+        let status = {
+            let mut str = read_to_string_buf(entry.join("status"), &mut buffer)
+                .expect("Failed to read battery status")
+                .to_owned();
+            str.truncate(str.trim_end_matches('\n').len());
+            str
+        };
 
         let full = read_to_string(entry.join("energy_full"))
             .or_else(|_| read_to_string(entry.join("charge_full")))
