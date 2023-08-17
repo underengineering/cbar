@@ -1,5 +1,6 @@
 use gtk::{glib, prelude::*, Application, ApplicationWindow};
 use mlua::prelude::*;
+use paste::paste;
 
 use super::enums;
 
@@ -12,7 +13,7 @@ macro_rules! push_enum {
 macro_rules! register_signals {
     ($reg: ident, [$($signal:ident),+]) => {
     $(
-        paste::paste! {
+        paste! {
             $reg.add_method(stringify!([<connect_ $signal>]), |_, this, f: LuaOwnedFunction| {
                 this.[<connect_ $signal>](move |_| {
                     f.call::<_, ()>(()).unwrap();
@@ -229,6 +230,63 @@ fn add_button_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         })?,
     )?;
     gtk_table.set("Button", button)?;
+
+    Ok(())
+}
+
+fn add_check_button_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+    lua.register_userdata_type::<gtk::CheckButton>(|reg| {
+        register_signals!(reg, [toggled]);
+
+        reg.add_method("set_active", |_, this, setting: bool| {
+            this.set_active(setting);
+            Ok(())
+        });
+
+        reg.add_method(
+            "set_child",
+            |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
+                this.set_child(child.as_deref());
+                Ok(())
+            },
+        );
+
+        reg.add_method(
+            "set_group",
+            |_, this, group: Option<LuaUserDataRef<gtk::CheckButton>>| {
+                this.set_group(group.as_deref());
+                Ok(())
+            },
+        );
+
+        reg.add_method("set_inconsistent", |_, this, inconsistent: bool| {
+            this.set_inconsistent(inconsistent);
+            Ok(())
+        });
+
+        reg.add_method("set_label", |_, this, label: Option<String>| {
+            this.set_label(label.as_deref());
+            Ok(())
+        });
+
+        add_widget_methods(reg);
+    })?;
+    let check_button = lua.create_table()?;
+    check_button.set(
+        "new",
+        lua.create_function(|lua, ()| {
+            let button = gtk::CheckButton::new();
+            lua.create_any_userdata(button)
+        })?,
+    )?;
+    check_button.set(
+        "with_label",
+        lua.create_function(|lua, label: String| {
+            let check_button = gtk::CheckButton::with_label(&label);
+            lua.create_any_userdata(check_button)
+        })?,
+    )?;
+    gtk_table.set("CheckButton", check_button)?;
 
     Ok(())
 }
@@ -609,6 +667,7 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     add_application_window_api(lua, &gtk_table)?;
     add_label_api(lua, &gtk_table)?;
     add_button_api(lua, &gtk_table)?;
+    add_check_button_api(lua, &gtk_table)?;
     add_box_api(lua, &gtk_table)?;
     add_grid_api(lua, &gtk_table)?;
     add_center_box_api(lua, &gtk_table)?;

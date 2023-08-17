@@ -202,6 +202,40 @@ gtk.Button = {
     set_label = function(self, label) end
 }
 
+---@class CheckButton : WidgetImpl
+gtk.CheckButton = {
+    ---@return CheckButton
+    new              = function() end,
+
+    ---@param label string
+    ---@return CheckButton
+    with_label       = function(label) end,
+
+    ---@param self CheckButton
+    ---@param callback fun():nil
+    connect_toggled  = function(self, callback) end,
+
+    ---@param self CheckButton
+    ---@param setting boolean
+    set_active       = function(self, setting) end,
+
+    ---@param self CheckButton
+    ---@param child Widget?
+    set_child        = function(self, child) end,
+
+    ---@param self CheckButton
+    ---@param group CheckButton?
+    set_group        = function(self, group) end,
+
+    ---@param self CheckButton
+    ---@param inconsistent boolean
+    set_inconsistent = function(self, inconsistent) end,
+
+    ---@param self CheckButton
+    ---@param label string?
+    set_label        = function(self, label) end,
+}
+
 ---@class Label : WidgetImpl
 gtk.Label = {
     ---@param str? string
