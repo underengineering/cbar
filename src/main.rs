@@ -9,6 +9,7 @@ mod error;
 mod hyprland;
 mod luaapi;
 mod system_info;
+mod utils;
 
 use crate::error::Error;
 
@@ -58,10 +59,12 @@ fn main() -> Result<(), Error> {
 
     let globals = lua.globals();
     let gtk_table = luaapi::gtk::add_api(&lua)?;
+    let gio_table = luaapi::gio::add_api(&lua)?;
     let utils_table = luaapi::utils::add_api(&lua)?;
     let hyprland_table = luaapi::hyprland::add_api(&lua)?;
     let sysinfo_table = luaapi::sysinfo::add_api(&lua)?;
     let pulseaudio_table = luaapi::pulseaudio::add_api(&lua)?;
+    globals.set("gio", gio_table)?;
     globals.set("utils", utils_table)?;
     globals.set("hyprland", hyprland_table)?;
     globals.set("sysinfo", sysinfo_table)?;

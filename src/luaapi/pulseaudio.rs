@@ -2,6 +2,8 @@ use gtk::glib::MainContext;
 use mlua::{prelude::*, IntoLua};
 use paste::paste;
 
+use crate::utils::pack_mask;
+
 macro_rules! push_enum {
     ($tbl:ident, $name:ty, [$($variant:ident),+]) => {
         $($tbl.set(stringify!($variant), <$name>::$variant as i32)?;)+
@@ -138,18 +140,6 @@ fn add_mainloop_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
 }
 
 fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
-    macro_rules! pack_mask {
-        ($tbl:ident, $mask:ident, $masktyp:ty, [$($value:ident),+]) => {
-            $(
-                if $tbl
-                    .get::<_, Option<bool>>(paste!(stringify!([<$value:lower>])))?
-                    .unwrap_or(false)
-                {
-                    $mask |= <$masktyp>::$value;
-                }
-            )+
-        };
-    }
     let interest_mask = lua.create_table()?;
     interest_mask.set(
         "new",

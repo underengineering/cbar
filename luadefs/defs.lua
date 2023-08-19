@@ -1,4 +1,5 @@
 ---@module 'gtk.lua'
+---@module 'gio.lua'
 ---@module 'hyprland.lua'
 ---@module 'utils.lua'
 ---@module 'sysinfo.lua'
