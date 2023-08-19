@@ -37,32 +37,32 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
 
     reg.add_method("get_visible", |_, this, ()| Ok(this.get_visible()));
 
-    reg.add_method("set_css_class", |_lua, this, class: String| {
+    reg.add_method("set_css_class", |_, this, class: String| {
         this.add_css_class(&class);
         Ok(())
     });
 
-    reg.add_method("set_css_classes", |_lua, this, classes: Vec<String>| {
+    reg.add_method("set_css_classes", |_, this, classes: Vec<String>| {
         this.set_css_classes(&classes.iter().map(String::as_str).collect::<Vec<_>>());
         Ok(())
     });
 
-    reg.add_method("add_css_class", |_lua, this, class: String| {
+    reg.add_method("add_css_class", |_, this, class: String| {
         this.add_css_class(&class);
         Ok(())
     });
 
-    reg.add_method("remove_css_class", |_lua, this, class: String| {
+    reg.add_method("remove_css_class", |_, this, class: String| {
         this.remove_css_class(&class);
         Ok(())
     });
 
-    reg.add_method("set_valign", |_lua, this, align: enums::Align| {
+    reg.add_method("set_valign", |_, this, align: enums::Align| {
         this.set_valign(align.0);
         Ok(())
     });
 
-    reg.add_method("set_halign", |_lua, this, align: enums::Align| {
+    reg.add_method("set_halign", |_, this, align: enums::Align| {
         this.set_halign(align.0);
         Ok(())
     });

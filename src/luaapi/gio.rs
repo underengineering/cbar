@@ -1,6 +1,7 @@
-use futures::pin_mut;
-use gtk::gio::{prelude::*, InputStream, OutputStream, Subprocess, SubprocessFlags};
-use gtk::glib::{Bytes, PRIORITY_DEFAULT};
+use gtk::{
+    gio::{prelude::*, InputStream, OutputStream, Subprocess, SubprocessFlags},
+    glib::{Bytes, PRIORITY_DEFAULT},
+};
 use mlua::prelude::*;
 use paste::paste;
 use std::ffi::OsStr;

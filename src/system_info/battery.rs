@@ -3,7 +3,7 @@ use std::{
     collections::HashMap,
     fs::{read_to_string, File},
     io::{self, Read},
-    path::{Path, PathBuf},
+    path::Path,
     time::Duration,
 };
 
