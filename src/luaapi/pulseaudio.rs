@@ -180,7 +180,7 @@ fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
         reg.add_method_mut("connect", |_, this, server: Option<String>| {
             let server = server.as_deref();
             this.connect(server, pulse::context::FlagSet::NOAUTOSPAWN, None)
-                .unwrap();
+                .into_lua_err()?;
 
             Ok(())
         });

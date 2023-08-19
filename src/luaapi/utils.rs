@@ -6,16 +6,14 @@ fn add_grass_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
     utils_table.set(
         "scss_from_path",
         lua.create_function(|_, path: String| {
-            Ok(grass::from_path(path, &grass::Options::default())
-                .expect("Failed to load scss file"))
+            grass::from_path(path, &grass::Options::default()).into_lua_err()
         })?,
     )?;
 
     utils_table.set(
         "scss_from_string",
         lua.create_function(|_, input: String| {
-            Ok(grass::from_string(input, &grass::Options::default())
-                .expect("Failed to load scss string"))
+            grass::from_string(input, &grass::Options::default()).into_lua_err()
         })?,
     )?;
 

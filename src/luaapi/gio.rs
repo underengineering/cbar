@@ -14,7 +14,7 @@ fn add_streams_api(lua: &Lua) -> LuaResult<()> {
             let data = this
                 .read_bytes_future(count, PRIORITY_DEFAULT)
                 .await
-                .expect("Failed to read from input stream");
+                .into_lua_err()?;
             lua.create_string(data)
         });
 
@@ -22,14 +22,12 @@ fn add_streams_api(lua: &Lua) -> LuaResult<()> {
             let read = this
                 .skip_future(count, PRIORITY_DEFAULT)
                 .await
-                .expect("Failed to read from input stream");
+                .into_lua_err()?;
             Ok(read)
         });
 
         reg.add_async_method("close", |_, this, ()| async move {
-            this.close_future(PRIORITY_DEFAULT)
-                .await
-                .expect("Failed to close input stream");
+            this.close_future(PRIORITY_DEFAULT).await.into_lua_err()?;
             Ok(())
         });
     })?;
@@ -40,14 +38,12 @@ fn add_streams_api(lua: &Lua) -> LuaResult<()> {
             let written = this
                 .write_bytes_future(&buffer, PRIORITY_DEFAULT)
                 .await
-                .expect("Failed to write to output stream");
+                .into_lua_err()?;
             Ok(written)
         });
 
         reg.add_async_method("flush", |_, this, ()| async move {
-            this.flush_future(PRIORITY_DEFAULT)
-                .await
-                .expect("Failed to flush output stream");
+            this.flush_future(PRIORITY_DEFAULT).await.into_lua_err()?;
             Ok(())
         });
 
@@ -56,9 +52,7 @@ fn add_streams_api(lua: &Lua) -> LuaResult<()> {
         reg.add_method("is_closing", |_, this, ()| Ok(this.is_closing()));
 
         reg.add_async_method("close", |_, this, ()| async move {
-            this.close_future(PRIORITY_DEFAULT)
-                .await
-                .expect("Failed to close output stream");
+            this.close_future(PRIORITY_DEFAULT).await.into_lua_err()?;
             Ok(())
         });
     })?;
@@ -99,7 +93,7 @@ fn add_subprocess_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
                 let (stdout, stderr) = this
                     .communicate_future(data.map(|x| Bytes::from(x.as_bytes())).as_ref())
                     .await
-                    .expect("Failed to communicate with process");
+                    .into_lua_err()?;
                 if stdout.is_some() && stderr.is_some() {
                     let stdout = lua.create_string(stdout.as_deref().unwrap())?;
                     let stderr = lua.create_string(stderr.as_deref().unwrap())?;
@@ -118,10 +112,7 @@ fn add_subprocess_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
         reg.add_async_method(
             "communicate",
             |lua, this, data: Option<String>| async move {
-                let (stdout, stderr) = this
-                    .communicate_utf8_future(data)
-                    .await
-                    .expect("Failed to communicate with process");
+                let (stdout, stderr) = this.communicate_utf8_future(data).await.into_lua_err()?;
                 if stdout.is_some() && stderr.is_some() {
                     let stdout = lua.create_string(stdout.unwrap().as_str())?;
                     let stderr = lua.create_string(stderr.unwrap().as_str())?;
@@ -138,9 +129,7 @@ fn add_subprocess_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
         );
 
         reg.add_async_method("wait", |_, this, ()| async move {
-            this.wait_future()
-                .await
-                .expect("Failed to wait for process termination");
+            this.wait_future().await.into_lua_err()?;
 
             Ok(())
         });
@@ -188,7 +177,7 @@ fn add_subprocess_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
             |lua, (args, flags): (Vec<String>, LuaUserDataRef<SubprocessFlags>)| {
                 let proc =
                     Subprocess::newv(&args.iter().map(OsStr::new).collect::<Vec<_>>(), *flags)
-                        .expect("Failed to create process");
+                        .into_lua_err()?;
 
                 lua.create_any_userdata(proc)
             },
