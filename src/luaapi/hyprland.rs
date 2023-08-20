@@ -1,11 +1,12 @@
+use mlua::prelude::*;
+use paste::paste;
+use tokio::sync::broadcast;
+
 use crate::hyprland::{
     event_loop::EventLoop,
     events::Event,
     ipc::{self, commands::*},
 };
-use mlua::prelude::*;
-use paste::paste;
-use tokio::sync::broadcast;
 
 macro_rules! push_ipc_methods {
     ($lua:ident, $table:ident, [$($command:ty),+]) => {

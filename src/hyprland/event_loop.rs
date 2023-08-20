@@ -1,8 +1,8 @@
-use futures::io::{AsyncBufReadExt};
+use futures::io::AsyncBufReadExt;
 use gtk::{
     gio::{
-        IOStreamAsyncReadWrite, InputStreamAsyncBufRead, PollableInputStream,
-        SocketClient, SocketConnection, UnixSocketAddress,
+        IOStreamAsyncReadWrite, InputStreamAsyncBufRead, PollableInputStream, SocketClient,
+        SocketConnection, UnixSocketAddress,
     },
     prelude::*,
 };
