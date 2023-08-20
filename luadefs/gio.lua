@@ -3,8 +3,36 @@
 ---@diagnostic disable:unused-local
 gio = {}
 
+---@class InputStreamAsyncBufRead
+local InputStreamAsyncBufRead = {
+    ---@param self InputStreamAsyncBufRead
+    ---@param capacity integer?
+    ---@return string
+    read_line = function(self, capacity) end,
+
+    ---@param self InputStreamAsyncBufRead
+    ---@param size integer
+    ---@return string
+    read_exact = function(self, size) end,
+
+    ---@param self InputStreamAsyncBufRead
+    ---@param size integer
+    ---@return string
+    read = function(self, size) end,
+
+    ---@param self InputStreamAsyncBufRead
+    ---@param size integer
+    ---@return string
+    read_to_end = function(self, size) end,
+}
+
 ---@class InputStream
 local InputStream = {
+    ---@param self InputStream
+    ---@param buffer_size integer
+    ---@return InputStreamAsyncBufRead
+    into_async_buf_read = function(self, buffer_size) end,
+
     ---@async
     ---@param self InputStream
     ---@param count integer
@@ -122,4 +150,32 @@ gio.Subprocess = {
     ---@param self Subprocess
     ---@return InputStream?
     stderr = function(self) end,
+}
+
+
+---@class SocketConnection
+local SocketConnection = {
+    ---@param self SocketConnection
+    ---@return InputStream
+    input_stream = function(self) end,
+
+    ---@param self SocketConnection
+    ---@return OutputStream
+    output_stream = function(self) end,
+
+    ---@async
+    ---@param self SocketConnection
+    close = function() end
+}
+
+---@class SocketClient
+gio.SocketClient = {
+    ---@return SocketClient
+    new = function() end,
+
+    ---@async
+    ---@param self SocketClient
+    ---@param path string
+    ---@return SocketConnection
+    connect_unix = function(self, path) end
 }

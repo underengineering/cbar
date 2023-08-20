@@ -1,15 +1,57 @@
+use futures::{AsyncBufReadExt, AsyncReadExt};
 use gtk::{
-    gio::{prelude::*, InputStream, OutputStream, Subprocess, SubprocessFlags},
+    gio::{
+        prelude::*, InputStream, InputStreamAsyncBufRead, OutputStream, SocketClient,
+        SocketConnection, Subprocess, SubprocessFlags, UnixSocketAddress,
+    },
     glib::{Bytes, PRIORITY_DEFAULT},
 };
 use mlua::prelude::*;
 use paste::paste;
-use std::ffi::OsStr;
+use std::{ffi::OsStr, path::Path};
 
 use crate::utils::pack_mask;
 
+fn add_async_read_buf_api(lua: &Lua) -> LuaResult<()> {
+    lua.register_userdata_type::<InputStreamAsyncBufRead<InputStream>>(|reg| {
+        reg.add_async_method_mut("read_line", |_, this, capacity: Option<usize>| async move {
+            let mut buffer = capacity.map_or_else(String::new, String::with_capacity);
+            this.read_line(&mut buffer).await.into_lua_err()?;
+            Ok(buffer)
+        });
+
+        reg.add_async_method_mut("read_exact", |lua, this, size: usize| async move {
+            let mut buffer = vec![0u8; size];
+            this.read_exact(&mut buffer).await.into_lua_err()?;
+            lua.create_string(&buffer)
+        });
+
+        reg.add_async_method_mut("read", |lua, this, size: usize| async move {
+            let mut buffer = vec![0u8; size];
+            this.read(&mut buffer).await.into_lua_err()?;
+            lua.create_string(&buffer)
+        });
+
+        reg.add_async_method_mut("read_to_end", |lua, this, size: usize| async move {
+            let mut buffer = vec![0u8; size];
+            this.read_to_end(&mut buffer).await.into_lua_err()?;
+            lua.create_string(&buffer)
+        });
+    })?;
+
+    Ok(())
+}
+
 fn add_streams_api(lua: &Lua) -> LuaResult<()> {
     lua.register_userdata_type::<InputStream>(|reg| {
+        reg.add_function(
+            "into_async_buf_read",
+            |lua, (this, buffer_size): (LuaOwnedAnyUserData, usize)| {
+                let this = this.take::<InputStream>()?;
+                lua.create_any_userdata(this.into_async_buf_read(buffer_size))
+            },
+        );
+
         reg.add_async_method("read", |lua, this, count: usize| async move {
             let data = this
                 .read_bytes_future(count, PRIORITY_DEFAULT)
@@ -188,11 +230,48 @@ fn add_subprocess_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
+pub fn add_socket_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
+    lua.register_userdata_type::<SocketConnection>(|reg| {
+        reg.add_method("input_stream", |lua, this, ()| {
+            lua.create_any_userdata(this.input_stream())
+        });
+
+        reg.add_method("output_stream", |lua, this, ()| {
+            lua.create_any_userdata(this.output_stream())
+        });
+
+        reg.add_async_method("close", |_, this, ()| async move {
+            this.close_future(PRIORITY_DEFAULT).await.into_lua_err()
+        });
+    })?;
+
+    lua.register_userdata_type::<SocketClient>(|reg| {
+        reg.add_async_method("connect_unix", |lua, this, path: String| async move {
+            let address = UnixSocketAddress::new(Path::new(&path));
+            let conn = this.connect_future(&address).await.into_lua_err()?;
+            lua.create_any_userdata(conn)
+        });
+    })?;
+    let socket_client = lua.create_table()?;
+    socket_client.set(
+        "new",
+        lua.create_function(|lua, ()| {
+            let socket = SocketClient::new();
+            lua.create_any_userdata(socket)
+        })?,
+    )?;
+    gio_table.set("SocketClient", socket_client)?;
+
+    Ok(())
+}
+
 pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     let gio_table = lua.create_table()?;
 
+    add_async_read_buf_api(lua)?;
     add_streams_api(lua)?;
     add_subprocess_api(lua, &gio_table)?;
+    add_socket_api(lua, &gio_table)?;
 
     Ok(gio_table)
 }
