@@ -13,7 +13,7 @@ mod utils;
 
 use crate::error::Error;
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
     /// Path to the lua file to execute.
@@ -21,6 +21,8 @@ struct Args {
     /// Defaults to $HOME/.config/cbar/main.lua
     #[arg(short, long)]
     config: Option<PathBuf>,
+    /// Values to pass to lua script
+    args: Vec<String>,
 }
 
 fn main() -> Result<(), Error> {
@@ -84,7 +86,15 @@ fn main() -> Result<(), Error> {
 
     let config = fs::read_to_string(&config_path)?;
     let file_name = config_path.file_name().unwrap().to_str().unwrap();
-    lua.load(config).set_name(file_name).exec()?;
+
+    let lua_args = args
+        .args
+        .into_iter()
+        .map(|x| lua.create_string(x).expect("Failed to create string"))
+        .map(LuaValue::String);
+    lua.load(config)
+        .set_name(file_name)
+        .call::<_, ()>(LuaMultiValue::from_iter(lua_args))?;
 
     Ok(())
 }
