@@ -42,22 +42,49 @@ gtk.MainContext            = {
     spawn_local = function(self, callback) end
 }
 
+---@class ApplicationFlagsCtor
+---@field is_service boolean?
+---@field is_launcher boolean?
+---@field handles_open boolean?
+---@field handles_command_line boolean?
+---@field send_environment boolean?
+---@field non_unique boolean?
+---@field can_override_app_id boolean?
+---@field allow_replacement boolean?
+---@field replace boolean?
+
+---@class ApplicationFlags
+gtk.ApplicationFlags       = {
+    ---@param flags ApplicationFlagsCtor
+    ---@return ApplicationFlags
+    new = function(flags) end
+}
+
 ---@class Application
 gtk.Application            = {
+    ---@param id string
+    ---@param flags ApplicationFlags
+    ---@return Application
+    new = function(id, flags) end,
+
     ---@param self Application
     ---@param callback fun():nil
     connect_activate = function(self, callback) end,
 
     ---@param self Application
+    ---@param callback fun():nil
+    connect_startup = function(self, callback) end,
+
+    ---@param self Application
+    ---@param callback fun():nil
+    connect_shutdown = function(self, callback) end,
+
+    ---@param self Application
     run = function(self) end
 }
 
----@type Application
-gtk.app                    = nil
-
-
 ---@class WidgetImpl
-local WidgetImpl = {
+local WidgetImpl           = {
     ---@param self WidgetImpl
     ---@return Widget
     upcast = function(self) end,
@@ -110,10 +137,10 @@ local WidgetImpl = {
 }
 
 ---@class Widget
-local Widget = {}
+local Widget               = {}
 
 ---@class ApplicationWindow : WidgetImpl
-gtk.ApplicationWindow = {
+gtk.ApplicationWindow      = {
     ---@param app Application
     ---@return ApplicationWindow
     new = function(app) end,
@@ -134,7 +161,7 @@ gtk.ApplicationWindow = {
 }
 
 ---@class Box : WidgetImpl
-gtk.Box = {
+gtk.Box                    = {
     ---@param orientation Orientation
     ---@param spacing number?
     ---@return Box
@@ -149,7 +176,7 @@ gtk.Box = {
     remove = function(self, widget) end
 }
 ---@class Grid : WidgetImpl
-gtk.Grid = {
+gtk.Grid                   = {
     ---@return Grid
     new = function() end,
 
@@ -167,7 +194,7 @@ gtk.Grid = {
 }
 
 ---@class CenterBox : WidgetImpl
-gtk.CenterBox = {
+gtk.CenterBox              = {
     ---@return CenterBox
     new = function() end,
 
@@ -185,7 +212,7 @@ gtk.CenterBox = {
 }
 
 ---@class Button : WidgetImpl
-gtk.Button = {
+gtk.Button                 = {
     ---@return Button
     new = function() end,
 
@@ -203,7 +230,7 @@ gtk.Button = {
 }
 
 ---@class CheckButton : WidgetImpl
-gtk.CheckButton = {
+gtk.CheckButton            = {
     ---@return CheckButton
     new              = function() end,
 
@@ -237,7 +264,7 @@ gtk.CheckButton = {
 }
 
 ---@class Label : WidgetImpl
-gtk.Label = {
+gtk.Label                  = {
     ---@param str? string
     ---@return Label
     new = function(str) end,
@@ -252,7 +279,7 @@ gtk.Label = {
 }
 
 ---@class Image : WidgetImpl
-gtk.Image = {
+gtk.Image                  = {
     ---@return Image
     new = function() end,
 
@@ -278,7 +305,7 @@ gtk.Image = {
 }
 
 ---@class Revealer : WidgetImpl
-gtk.Revealer = {
+gtk.Revealer               = {
     ---@return Revealer
     new = function() end,
 
@@ -300,7 +327,7 @@ gtk.Revealer = {
 }
 
 ---@class CssProvider
-gtk.CssProvider = {
+gtk.CssProvider            = {
     ---@return CssProvider
     new = function() end,
 

@@ -1,8 +1,9 @@
-use gtk::{glib, prelude::*, Application, ApplicationWindow};
+use gtk::{gio::ApplicationFlags, glib, prelude::*, Application, ApplicationWindow};
 use mlua::prelude::*;
 use paste::paste;
 
 use super::enums;
+use crate::utils::pack_mask;
 
 macro_rules! push_enum {
     ($tbl:ident, $ns:ident, $name:ident, [$($variant:ident),+]) => {
@@ -150,7 +151,34 @@ fn add_global_functions(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
-fn add_application_api(lua: &Lua) -> LuaResult<()> {
+fn add_application_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+    let app_flags = lua.create_table()?;
+    app_flags.set(
+        "new",
+        lua.create_function(|lua, flags_table: LuaTable| {
+            let mut flags = ApplicationFlags::FLAGS_NONE;
+            pack_mask!(
+                flags_table,
+                flags,
+                ApplicationFlags,
+                [
+                    IS_SERVICE,
+                    IS_LAUNCHER,
+                    HANDLES_OPEN,
+                    HANDLES_COMMAND_LINE,
+                    SEND_ENVIRONMENT,
+                    NON_UNIQUE,
+                    CAN_OVERRIDE_APP_ID,
+                    ALLOW_REPLACEMENT,
+                    REPLACE
+                ]
+            );
+
+            lua.create_any_userdata(flags)
+        })?,
+    )?;
+    gtk_table.set("ApplicationFlags", app_flags)?;
+
     lua.register_userdata_type::<Application>(|reg| {
         register_signals!(reg, [activate, startup, shutdown]);
 
@@ -159,6 +187,17 @@ fn add_application_api(lua: &Lua) -> LuaResult<()> {
             Ok(())
         });
     })?;
+    let app = lua.create_table()?;
+    app.set(
+        "new",
+        lua.create_function(
+            |lua, (id, flags): (Option<String>, LuaUserDataRef<ApplicationFlags>)| {
+                let app = Application::new(id, *flags);
+                lua.create_any_userdata(app)
+            },
+        )?,
+    )?;
+    gtk_table.set("Application", app)?;
 
     Ok(())
 }
@@ -663,7 +702,7 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
 
     add_enums(lua, &gtk_table)?;
     add_global_functions(lua, &gtk_table)?;
-    add_application_api(lua)?;
+    add_application_api(lua, &gtk_table)?;
     add_application_window_api(lua, &gtk_table)?;
     add_label_api(lua, &gtk_table)?;
     add_button_api(lua, &gtk_table)?;

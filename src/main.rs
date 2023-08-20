@@ -1,9 +1,6 @@
 use clap::Parser;
-use gtk::Application;
 use mlua::prelude::*;
 use std::{env, fs, path::PathBuf};
-
-const APP_ID: &str = "org.gtk_rs.HelloWorld1";
 
 mod error;
 mod hyprland;
@@ -66,6 +63,7 @@ fn main() -> Result<(), Error> {
     let hyprland_table = luaapi::hyprland::add_api(&lua)?;
     let sysinfo_table = luaapi::sysinfo::add_api(&lua)?;
     let pulseaudio_table = luaapi::pulseaudio::add_api(&lua)?;
+    globals.set("gtk", gtk_table)?;
     globals.set("gio", gio_table)?;
     globals.set("utils", utils_table)?;
     globals.set("hyprland", hyprland_table)?;
@@ -78,11 +76,6 @@ fn main() -> Result<(), Error> {
             .parent()
             .expect("Failed to get config parent directory"),
     )?;
-
-    let app = Application::builder().application_id(APP_ID).build();
-
-    gtk_table.set("app", lua.create_any_userdata(app)?)?;
-    globals.set("gtk", gtk_table)?;
 
     let config = fs::read_to_string(&config_path)?;
     let file_name = config_path.file_name().unwrap().to_str().unwrap();
