@@ -18,6 +18,22 @@ gtk.Align                  = {
     Baseline = 4,
 }
 
+---@class Priority
+local Priority             = {}
+
+gtk.Priority               = {
+    ---@type Priority
+    HIGH = nil,
+    ---@type Priority
+    DEFAULT = nil,
+    ---@type Priority
+    HIGH_IDLE = nil,
+    ---@type Priority
+    DEFAULT_IDLE = nil,
+    ---@type Priority
+    LOW = nil,
+}
+
 ---@enum RevealerTransitionType
 gtk.RevealerTransitionType = {
     None = 0,
@@ -40,6 +56,11 @@ gtk.MainContext            = {
     ---@param self MainContext
     ---@param callback fun():nil
     spawn_local = function(self, callback) end
+
+    ---@param self MainContext
+    ---@param priority Priority
+    ---@param callback fun():nil
+    spawn_local_with_priority = function(self, priority, callback) end
 }
 
 ---@class ApplicationFlagsCtor

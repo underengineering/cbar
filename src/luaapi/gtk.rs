@@ -1,4 +1,9 @@
-use gtk::{gio::ApplicationFlags, glib, prelude::*, Application, ApplicationWindow};
+use gtk::{
+    gio::ApplicationFlags,
+    glib::{self, translate::IntoGlib},
+    prelude::*,
+    Application, ApplicationWindow,
+};
 use mlua::prelude::*;
 use paste::paste;
 
@@ -112,6 +117,20 @@ fn add_enums(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     let align = lua.create_table()?;
     push_enum!(align, gtk, Align, [Fill, Start, End, Center, Baseline]);
     gtk_table.set("Align", align)?;
+
+    let priority = lua.create_table()?;
+    priority.set("HIGH", lua.create_any_userdata(glib::PRIORITY_HIGH)?)?;
+    priority.set("DEFAULT", lua.create_any_userdata(glib::PRIORITY_DEFAULT)?)?;
+    priority.set(
+        "HIGH_IDLE",
+        lua.create_any_userdata(glib::PRIORITY_HIGH_IDLE)?,
+    )?;
+    priority.set(
+        "DEFAULT_IDLE",
+        lua.create_any_userdata(glib::PRIORITY_DEFAULT_IDLE)?,
+    )?;
+    priority.set("LOW", lua.create_any_userdata(glib::PRIORITY_LOW)?)?;
+    gtk_table.set("Priority", priority)?;
 
     let transition_type = lua.create_table()?;
     push_enum!(
@@ -606,6 +625,16 @@ fn add_context_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             this.spawn_local(async move { f.call_async::<_, ()>(()).await.unwrap() });
             Ok(())
         });
+
+        reg.add_method(
+            "spawn_local_with_priority",
+            |_, this, (priority, f): (LuaUserDataRef<glib::Priority>, LuaOwnedFunction)| {
+                this.spawn_local_with_priority(*priority, async move {
+                    f.call_async::<_, ()>(()).await.unwrap()
+                });
+                Ok(())
+            },
+        );
     })?;
     let ctx = lua.create_table()?;
     ctx.set(
