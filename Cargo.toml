@@ -28,7 +28,7 @@ gtk4-layer-shell = "=0.0.3"
 paste = "1.0.14"
 pulse = { version = "2.28.1", package = "libpulse-binding" }
 pulse_glib = { version = "2.28.1", package = "libpulse-glib-binding" }
-serde = { version = "=1.0.171", features = ["derive"] }
+serde = { version = ">=1.0.184", features = ["derive"] }
 serde_json = "1.0.105"
 sysinfo = "0.29.8"
 thiserror = "1.0.47"
