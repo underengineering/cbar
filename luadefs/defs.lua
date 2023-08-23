@@ -4,3 +4,4 @@
 ---@module 'utils.lua'
 ---@module 'sysinfo.lua'
 ---@module 'pulseaudio.lua'
+---@module 'utf8.lua'

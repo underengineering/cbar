@@ -63,12 +63,14 @@ fn main() -> Result<(), Error> {
     let hyprland_table = luaapi::hyprland::add_api(&lua)?;
     let sysinfo_table = luaapi::sysinfo::add_api(&lua)?;
     let pulseaudio_table = luaapi::pulseaudio::add_api(&lua)?;
+    let utf8_table = luaapi::utf8::add_api(&lua)?;
     globals.set("gtk", gtk_table)?;
     globals.set("gio", gio_table)?;
     globals.set("utils", utils_table)?;
     globals.set("hyprland", hyprland_table)?;
     globals.set("sysinfo", sysinfo_table)?;
     globals.set("pulseaudio", pulseaudio_table)?;
+    globals.set("utf8", utf8_table)?;
 
     // Set current directory to the config path
     env::set_current_dir(
