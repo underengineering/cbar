@@ -42,8 +42,7 @@ impl EventLoop {
         let sock = SocketClient::new();
         let conn = sock
             .connect_future(&UnixSocketAddress::new(socket2_path))
-            .await
-            .unwrap();
+            .await?;
         let stream = conn.into_async_read_write().unwrap();
 
         self.reader = Some(stream.input_stream().clone().into_async_buf_read(256));

@@ -24,8 +24,7 @@ async fn try_request<T: Command>(buffer: &mut Vec<u8>) -> Result<(), Error> {
     let sock = SocketClient::new();
     let conn = sock
         .connect_future(&UnixSocketAddress::new(socket_path))
-        .await
-        .unwrap();
+        .await?;
     let stream = conn.into_async_read_write().unwrap();
 
     let mut writer = stream.output_stream().clone().into_async_write().unwrap();
