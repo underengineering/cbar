@@ -123,7 +123,7 @@ fn add_other_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
                     io.write(",\n")
                     goto continue
                 elseif vtype == "string" then
-                    v_formatted = ("\"%s\""):format(k:gsub("\n", "\\n"))
+                    v_formatted = ("\"%s\""):format(v:gsub("\n", "\\n"))
                 else
                     v_formatted = v
                 end
