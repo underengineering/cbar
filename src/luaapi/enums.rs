@@ -118,6 +118,33 @@ impl Into<i32> for Edge {
 
 impl_lua!(Edge);
 
+pub(super) struct KeyboardMode(pub(super) gtk4_layer_shell::KeyboardMode);
+impl std::convert::TryFrom<i32> for KeyboardMode {
+    type Error = Error;
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self(gtk4_layer_shell::KeyboardMode::None)),
+            1 => Ok(Self(gtk4_layer_shell::KeyboardMode::Exclusive)),
+            2 => Ok(Self(gtk4_layer_shell::KeyboardMode::OnDemand)),
+            _ => Err(Error::ConversionFailed),
+        }
+    }
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<i32> for KeyboardMode {
+    fn into(self) -> i32 {
+        match self.0 {
+            gtk4_layer_shell::KeyboardMode::None => 0,
+            gtk4_layer_shell::KeyboardMode::Exclusive => 1,
+            gtk4_layer_shell::KeyboardMode::OnDemand => 2,
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl_lua!(KeyboardMode);
+
 pub(super) struct Align(pub(super) gtk::Align);
 impl std::convert::TryFrom<i32> for Align {
     type Error = Error;

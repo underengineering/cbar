@@ -718,6 +718,15 @@ fn add_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     push_enum!(edge, gtk4_layer_shell, Edge, [Left, Right, Top, Bottom]);
     layer_shell.set("Edge", edge)?;
 
+    let keyboard_mode = lua.create_table()?;
+    push_enum!(
+        keyboard_mode,
+        gtk4_layer_shell,
+        KeyboardMode,
+        [None, Exclusive, OnDemand]
+    );
+    layer_shell.set("KeyboardMode", keyboard_mode)?;
+
     layer_shell.set(
         "init_for_window",
         lua.create_function(|_, window: LuaUserDataRef<ApplicationWindow>| {
@@ -769,6 +778,15 @@ fn add_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
                 bool,
             )| {
                 gtk4_layer_shell::set_anchor(&*window, edge.0, anchor_to_edge);
+                Ok(())
+            },
+        )?,
+    )?;
+    layer_shell.set(
+        "set_keyboard_mode",
+        lua.create_function(
+            |_, (window, mode): (LuaUserDataRef<ApplicationWindow>, enums::KeyboardMode)| {
+                gtk4_layer_shell::set_keyboard_mode(&*window, mode.0);
                 Ok(())
             },
         )?,

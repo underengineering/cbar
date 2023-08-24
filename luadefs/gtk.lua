@@ -394,6 +394,13 @@ gtk.layer_shell.Edge = {
     Bottom = 3
 }
 
+---@enum KeyboardMode
+gtk.layer_shell.KeyboardMode = {
+    None = 0,
+    Exclusive = 1,
+    OnDemand = 2,
+}
+
 ---@param window ApplicationWindow
 function gtk.layer_shell.init_for_window(window) end
 
@@ -417,3 +424,7 @@ function gtk.layer_shell.set_margin(window, edge, margin_size) end
 ---@param edge Edge
 ---@param anchor_to_edge boolean
 function gtk.layer_shell.set_anchor(window, edge, anchor_to_edge) end
+
+---@param window ApplicationWindow
+---@param mode KeyboardMode
+function gtk.layer_shell.set_keyboard_mode(window, mode) end
