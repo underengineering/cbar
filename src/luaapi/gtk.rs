@@ -1,6 +1,6 @@
 use gtk::{
     gio::{ApplicationFlags, Icon},
-    glib::{self, translate::IntoGlib},
+    glib,
     prelude::*,
     Application, ApplicationWindow,
 };
