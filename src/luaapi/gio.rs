@@ -1,8 +1,10 @@
 use futures::{AsyncBufReadExt, AsyncReadExt};
 use gtk::{
+    gdk::AppLaunchContext,
     gio::{
-        prelude::*, InputStream, InputStreamAsyncBufRead, OutputStream, SocketClient,
-        SocketConnection, Subprocess, SubprocessFlags, UnixSocketAddress,
+        prelude::*, AppInfo, AppInfoMonitor, File, FileCreateFlags, InputStream,
+        InputStreamAsyncBufRead, OutputStream, SocketClient, SocketConnection, Subprocess,
+        SubprocessFlags, UnixSocketAddress,
     },
     glib::{Bytes, PRIORITY_DEFAULT},
 };
@@ -10,7 +12,7 @@ use mlua::prelude::*;
 use paste::paste;
 use std::{ffi::OsStr, path::Path};
 
-use crate::utils::pack_mask;
+use crate::utils::{pack_mask, register_signals};
 
 fn add_async_read_buf_api(lua: &Lua) -> LuaResult<()> {
     lua.register_userdata_type::<InputStreamAsyncBufRead<InputStream>>(|reg| {
@@ -265,6 +267,140 @@ pub fn add_socket_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
+fn add_file_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
+    lua.register_userdata_type::<File>(|reg| {
+        /* reg.add_async_method(
+            "query_info",
+            |lua, this, (attributes, flags): (String,Option<LuaUserDataRef<FileQueryInfoFlags>>)| async move {
+                let flags = flags.as_deref().unwrap_or(&FileQueryInfoFlags::NONE);
+                this.query_info_future(&attributes, *flags, PRIORITY_DEFAULT).await.into_lua_err()?;
+                Ok(())
+            },
+        ); */
+
+        reg.add_async_method("read", |lua, this, ()| async move {
+            let stream = this.read_future(PRIORITY_DEFAULT).await.into_lua_err()?;
+            lua.create_any_userdata(stream.upcast::<InputStream>())
+        });
+
+        reg.add_async_method("create", |lua, this, ()| async move {
+            let stream = this
+                .create_future(FileCreateFlags::NONE, PRIORITY_DEFAULT)
+                .await
+                .into_lua_err()?;
+            lua.create_any_userdata(stream.upcast::<OutputStream>())
+        });
+
+        reg.add_async_method("replace", |lua, this, ()| async move {
+            let stream = this
+                .replace_future(None, false, FileCreateFlags::NONE, PRIORITY_DEFAULT)
+                .await
+                .into_lua_err()?;
+            lua.create_any_userdata(stream.upcast::<OutputStream>())
+        });
+    })?;
+    let file = lua.create_table()?;
+    file.set(
+        "for_path",
+        lua.create_function(|lua, path: String| lua.create_any_userdata(File::for_path(path)))?,
+    )?;
+    gio_table.set("File", file)?;
+
+    Ok(())
+}
+
+fn add_app_info_monitor_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
+    lua.register_userdata_type::<AppInfoMonitor>(|reg| {
+        register_signals!(reg, [changed]);
+    })?;
+    let app_info_monitor = lua.create_table()?;
+    app_info_monitor.set(
+        "get",
+        lua.create_function(|lua, ()| lua.create_any_userdata(AppInfoMonitor::get()))?,
+    )?;
+    gio_table.set("AppInfoMonitor", app_info_monitor)?;
+
+    Ok(())
+}
+
+fn add_app_info_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
+    lua.register_userdata_type::<AppInfo>(|reg| {
+        reg.add_method("name", |lua, this, ()| {
+            lua.create_string(this.name().as_str())
+        });
+
+        reg.add_method("display_name", |lua, this, ()| {
+            lua.create_string(this.display_name().as_str())
+        });
+
+        reg.add_method("icon", |lua, this, ()| {
+            let result = if let Some(icon) = this.icon() {
+                Some(lua.create_any_userdata(icon)?)
+            } else {
+                None
+            };
+
+            Ok(result)
+        });
+
+        reg.add_method("id", |lua, this, ()| {
+            let result = if let Some(id) = this.id() {
+                Some(lua.create_string(id.as_str())?)
+            } else {
+                None
+            };
+
+            Ok(result)
+        });
+
+        reg.add_method("description", |lua, this, ()| {
+            let result = if let Some(description) = this.description() {
+                Some(lua.create_string(description.as_str())?)
+            } else {
+                None
+            };
+
+            Ok(result)
+        });
+
+        reg.add_method("delete", |_, this, ()| Ok(this.delete()));
+        reg.add_method("launch", |_, this, files: Vec<LuaUserDataRef<File>>| {
+            this.launch(
+                &files.into_iter().map(|x| x.clone()).collect::<Vec<_>>(),
+                None::<&AppLaunchContext>,
+            )
+            .into_lua_err()?;
+            Ok(())
+        });
+        reg.add_method("launch_uris", |_, this, uris: Vec<String>| {
+            this.launch_uris(
+                &uris.iter().map(String::as_str).collect::<Vec<_>>(),
+                None::<&AppLaunchContext>,
+            )
+            .into_lua_err()?;
+            Ok(())
+        });
+
+        reg.add_method("should_show", |_, this, ()| Ok(this.should_show()));
+        reg.add_method("supports_files", |_, this, ()| Ok(this.supports_files()));
+        reg.add_method("supports_uris", |_, this, ()| Ok(this.supports_uris()));
+        reg.add_method("can_delete", |_, this, ()| Ok(this.can_delete()));
+    })?;
+    let app_info = lua.create_table()?;
+    app_info.set(
+        "all",
+        lua.create_function(|lua, ()| {
+            AppInfo::all()
+                .into_iter()
+                .map(|x| lua.create_any_userdata(x))
+                .collect::<LuaResult<Vec<_>>>()
+        })?,
+    )?;
+    gio_table.set("AppInfo", app_info)?;
+
+    Ok(())
+}
+
 pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     let gio_table = lua.create_table()?;
 
@@ -272,6 +408,9 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     add_streams_api(lua)?;
     add_subprocess_api(lua, &gio_table)?;
     add_socket_api(lua, &gio_table)?;
+    add_file_api(lua, &gio_table)?;
+    add_app_info_monitor_api(lua, &gio_table)?;
+    add_app_info_api(lua, &gio_table)?;
 
     Ok(gio_table)
 }

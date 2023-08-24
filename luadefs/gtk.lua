@@ -312,6 +312,10 @@ gtk.Image                  = {
     ---@return Image
     from_icon_name = function(icon_name) end,
 
+    ---@param icon Icon
+    ---@return Image
+    from_gicon = function(icon) end,
+
     ---@param self Image
     ---@param pixel_size integer
     set_pixel_size = function(self, pixel_size) end,
@@ -323,6 +327,10 @@ gtk.Image                  = {
     ---@param self Image
     ---@param icon_name string
     set_from_icon_name = function(self, icon_name) end,
+
+    ---@param self Image
+    ---@param icon Icon
+    set_from_gicon = function(self, icon) end,
 }
 
 ---@class Revealer : WidgetImpl

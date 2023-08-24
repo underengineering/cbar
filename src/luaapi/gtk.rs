@@ -1,5 +1,5 @@
 use gtk::{
-    gio::ApplicationFlags,
+    gio::{ApplicationFlags, Icon},
     glib::{self, translate::IntoGlib},
     prelude::*,
     Application, ApplicationWindow,
@@ -8,26 +8,11 @@ use mlua::prelude::*;
 use paste::paste;
 
 use super::enums;
-use crate::utils::pack_mask;
+use crate::utils::{pack_mask, register_signals};
 
 macro_rules! push_enum {
     ($tbl:ident, $ns:ident, $name:ident, [$($variant:ident),+]) => {
         $($tbl.set(stringify!($variant), enums::$name($ns::$name::$variant))?;)+
-    };
-}
-
-macro_rules! register_signals {
-    ($reg: ident, [$($signal:ident),+]) => {
-    $(
-        paste! {
-            $reg.add_method(stringify!([<connect_ $signal>]), |_, this, f: LuaOwnedFunction| {
-                this.[<connect_ $signal>](move |_| {
-                    f.call::<_, ()>(()).unwrap();
-                });
-                Ok(())
-            });
-        }
-    )+
     };
 }
 
@@ -522,6 +507,11 @@ fn add_image_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             },
         );
 
+        reg.add_method("set_from_gicon", |_, this, icon: LuaUserDataRef<Icon>| {
+            this.set_from_gicon(&*icon);
+            Ok(())
+        });
+
         add_widget_methods(reg);
     })?;
     let image = lua.create_table()?;
@@ -543,6 +533,13 @@ fn add_image_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         "from_icon_name",
         lua.create_function(|lua, icon_name: String| {
             let image = gtk::Image::from_icon_name(&icon_name);
+            lua.create_any_userdata(image)
+        })?,
+    )?;
+    image.set(
+        "from_gicon",
+        lua.create_function(|lua, icon: LuaUserDataRef<Icon>| {
+            let image = gtk::Image::from_gicon(&*icon);
             lua.create_any_userdata(image)
         })?,
     )?;

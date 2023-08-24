@@ -12,3 +12,20 @@ macro_rules! pack_mask {
 }
 
 pub(crate) use pack_mask;
+
+macro_rules! register_signals {
+    ($reg: ident, [$($signal:ident),+]) => {
+    $(
+        paste! {
+            $reg.add_method(stringify!([<connect_ $signal>]), |_, this, f: LuaOwnedFunction| {
+                this.[<connect_ $signal>](move |_| {
+                    f.call::<_, ()>(()).unwrap();
+                });
+                Ok(())
+            });
+        }
+    )+
+    };
+}
+
+pub(crate) use register_signals;

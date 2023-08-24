@@ -179,3 +179,91 @@ gio.SocketClient = {
     ---@return SocketConnection
     connect_unix = function(self, path) end
 }
+
+---@class File
+gio.File = {
+    ---@param path string
+    ---@return File
+    for_path = function(path) end,
+
+    ---@async
+    ---@param self File
+    ---@return InputStream
+    read = function(self) end,
+
+    ---@async
+    ---@param self File
+    ---@return OutputStream
+    create = function(self) end,
+
+    ---@async
+    ---@param self File
+    ---@return OutputStream
+    replace = function(self) end,
+}
+
+---@class AppInfoMonitor
+gio.AppInfoMonitor = {
+    ---@return AppInfoMonitor
+    get = function() end,
+
+    ---@param self AppInfoMonitor
+    ---@param callback fun():nil
+    connect_changed = function(self, callback) end,
+}
+
+---@class Icon
+local Icon = {}
+
+---@class AppInfo
+gio.AppInfo = {
+    ---@return AppInfo[]
+    all = function() end,
+
+    ---@param self AppInfo
+    ---@return string
+    name = function(self) end,
+
+    ---@param self AppInfo
+    ---@return string
+    display_name = function(self) end,
+
+    ---@param self AppInfo
+    ---@return Icon
+    icon = function(self) end,
+
+    ---@param self AppInfo
+    ---@return string?
+    id = function(self) end,
+
+    ---@param self AppInfo
+    ---@return string?
+    description = function(self) end,
+
+    ---@param self AppInfo
+    delete = function(self) end,
+
+    ---@param self AppInfo
+    ---@param files File[]
+    launch = function(self, files) end,
+
+    ---@param self AppInfo
+    ---@param uris string[]
+    launch_uris = function(self, uris) end,
+
+    ---@param self AppInfo
+    ---@return boolean
+    should_show = function(self) end,
+
+    ---@param self AppInfo
+    ---@return boolean
+    supports_files = function(self) end,
+
+    ---@param self AppInfo
+    ---@return boolean
+    supports_uris = function(self) end,
+
+    ---@param self AppInfo
+    ---@return boolean
+    can_delete = function(self) end,
+}
