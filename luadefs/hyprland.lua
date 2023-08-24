@@ -155,6 +155,10 @@ local ScreenCastOwner = {
 
 ---@class Receiver
 local Receiver = {
+    ---@param self Receiver
+    ---@return integer
+    len = function(self) end,
+
     ---@async
     ---@return Event?
     recv = function() end

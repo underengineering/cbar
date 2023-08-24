@@ -52,6 +52,10 @@ impl EventLoop {
         Ok(())
     }
 
+    pub fn connected(&self) -> bool {
+        self.reader.is_some()
+    }
+
     pub fn subscribe(&self) -> broadcast::Receiver<Event> {
         self.sender.subscribe()
     }

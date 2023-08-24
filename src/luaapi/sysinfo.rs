@@ -102,6 +102,10 @@ fn add_system_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
     sysinfo_table.set("RefreshKind", refresh_kind)?;
 
     lua.register_userdata_type::<System>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("System {}")
+        });
+
         // Refresh methods
         reg.add_method_mut("refresh_all", |_, this, ()| {
             this.refresh_all();

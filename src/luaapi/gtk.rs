@@ -186,6 +186,10 @@ fn add_application_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<Application>(|reg| {
         register_signals!(reg, [activate, startup, shutdown]);
 
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("Application {}")
+        });
+
         reg.add_method("run", |_, this, ()| {
             this.run_with_args(&[""]);
             Ok(())
@@ -208,6 +212,10 @@ fn add_application_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
 fn add_application_window_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<ApplicationWindow>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("ApplicationWindow {}")
+        });
+
         reg.add_method("set_title", |_, this, title: Option<String>| {
             this.set_title(title.as_deref());
             Ok(())
@@ -250,6 +258,10 @@ fn add_button_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::Button>(|reg| {
         register_signals!(reg, [clicked]);
 
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("Button {}")
+        });
+
         reg.add_method("set_label", |_, this, label: String| {
             this.set_label(&label);
             Ok(())
@@ -280,6 +292,10 @@ fn add_button_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 fn add_check_button_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::CheckButton>(|reg| {
         register_signals!(reg, [toggled]);
+
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("CheckButton {}")
+        });
 
         reg.add_method("set_active", |_, this, setting: bool| {
             this.set_active(setting);
@@ -336,6 +352,10 @@ fn add_check_button_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
 fn add_label_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::Label>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("Label {}")
+        });
+
         reg.add_method("set_label", |_, this, str: String| {
             this.set_text(&str);
             Ok(())
@@ -363,6 +383,10 @@ fn add_label_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
 fn add_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::Box>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("Box {}")
+        });
+
         reg.add_method("prepend", |_, this, child: LuaUserDataRef<gtk::Widget>| {
             this.prepend(&*child);
             Ok(())
@@ -410,6 +434,10 @@ fn add_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
 fn add_grid_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::Grid>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("Grid {}")
+        });
+
         reg.add_method(
             "attach",
             |_,
@@ -448,6 +476,10 @@ fn add_grid_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
 fn add_center_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::CenterBox>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("CenterBox {}")
+        });
+
         reg.add_method(
             "set_start_widget",
             |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
@@ -489,6 +521,10 @@ fn add_center_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
 fn add_image_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::Image>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("Image {}")
+        });
+
         reg.add_method("set_pixel_size", |_, this, pixel_size: i32| {
             this.set_pixel_size(pixel_size);
             Ok(())
@@ -550,6 +586,10 @@ fn add_image_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
 fn add_revealer_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::Revealer>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("Revealer {}")
+        });
+
         reg.add_method(
             "set_child",
             |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
@@ -593,6 +633,10 @@ fn add_revealer_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
 fn add_css_provider(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::CssProvider>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("CssProvider {}")
+        });
+
         reg.add_method("load_from_data", |_, this, data: String| {
             this.load_from_data(&data);
             Ok(())
@@ -618,6 +662,10 @@ fn add_css_provider(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
 fn add_context_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<glib::MainContext>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("MainContext {}")
+        });
+
         reg.add_method("spawn_local", |_, this, f: LuaOwnedFunction| {
             this.spawn_local(async move { f.call_async::<_, ()>(()).await.unwrap() });
             Ok(())

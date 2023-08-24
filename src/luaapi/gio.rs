@@ -16,6 +16,10 @@ use crate::utils::{pack_mask, register_signals};
 
 fn add_async_read_buf_api(lua: &Lua) -> LuaResult<()> {
     lua.register_userdata_type::<InputStreamAsyncBufRead<InputStream>>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("InputStreamAsyncBufRead<InputStream> {}")
+        });
+
         reg.add_async_method_mut("read_line", |_, this, capacity: Option<usize>| async move {
             let mut buffer = capacity.map_or_else(String::new, String::with_capacity);
             this.read_line(&mut buffer).await.into_lua_err()?;
@@ -46,6 +50,10 @@ fn add_async_read_buf_api(lua: &Lua) -> LuaResult<()> {
 
 fn add_streams_api(lua: &Lua) -> LuaResult<()> {
     lua.register_userdata_type::<InputStream>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("InputStream {}")
+        });
+
         reg.add_function(
             "into_async_buf_read",
             |lua, (this, buffer_size): (LuaOwnedAnyUserData, usize)| {
@@ -77,6 +85,10 @@ fn add_streams_api(lua: &Lua) -> LuaResult<()> {
     })?;
 
     lua.register_userdata_type::<OutputStream>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("OutputStream {}")
+        });
+
         reg.add_async_method("write", |_, this, data: LuaString| async move {
             let buffer = Bytes::from(data.as_bytes());
             let written = this
@@ -131,6 +143,10 @@ fn add_subprocess_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
     gio_table.set("SubprocessFlags", subprocess_flags)?;
 
     lua.register_userdata_type::<Subprocess>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("Subprocess {}")
+        });
+
         reg.add_async_method(
             "communicate_raw",
             |lua, this, data: Option<String>| async move {
@@ -234,6 +250,10 @@ fn add_subprocess_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
 
 pub fn add_socket_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<SocketConnection>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("SocketConnection {}")
+        });
+
         reg.add_method("input_stream", |lua, this, ()| {
             lua.create_any_userdata(this.input_stream())
         });
@@ -277,6 +297,19 @@ fn add_file_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
                 Ok(())
             },
         ); */
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, this, ()| {
+            lua.create_string(format!("File {{ path = {:?} }}", this.path()))
+        });
+
+        reg.add_method("path", |lua, this, ()| {
+            let result = if let Some(path) = this.path() {
+                Some(lua.create_string(path.into_os_string().to_str().unwrap())?)
+            } else {
+                None
+            };
+
+            Ok(result)
+        });
 
         reg.add_async_method("read", |lua, this, ()| async move {
             let stream = this.read_future(PRIORITY_DEFAULT).await.into_lua_err()?;
@@ -312,6 +345,10 @@ fn add_file_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
 fn add_app_info_monitor_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<AppInfoMonitor>(|reg| {
         register_signals!(reg, [changed]);
+
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("AppInfoMonitor {}")
+        });
     })?;
     let app_info_monitor = lua.create_table()?;
     app_info_monitor.set(
@@ -325,6 +362,10 @@ fn add_app_info_monitor_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
 
 fn add_app_info_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<AppInfo>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, this, ()| {
+            lua.create_string(format!("AppInfo {{ name = \"{}\" }}", this.name()))
+        });
+
         reg.add_method("name", |lua, this, ()| {
             lua.create_string(this.name().as_str())
         });

@@ -177,6 +177,10 @@ fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
     pulseaudio_table.set("Volume", volume)?;
 
     lua.register_userdata_type::<pulse::context::Context>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, this, ()| {
+            lua.create_string(format!("Context {{ state = {:?} }}", this.get_state()))
+        });
+
         reg.add_method_mut("connect", |_, this, server: Option<String>| {
             let server = server.as_deref();
             this.connect(server, pulse::context::FlagSet::NOAUTOSPAWN, None)

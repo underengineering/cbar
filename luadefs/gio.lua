@@ -186,6 +186,10 @@ gio.File = {
     ---@return File
     for_path = function(path) end,
 
+    ---@param self File
+    ---@return string?
+    path = function(self) end,
+
     ---@async
     ---@param self File
     ---@return InputStream
@@ -229,7 +233,7 @@ gio.AppInfo = {
     display_name = function(self) end,
 
     ---@param self AppInfo
-    ---@return Icon
+    ---@return Icon?
     icon = function(self) end,
 
     ---@param self AppInfo
