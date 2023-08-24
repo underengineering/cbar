@@ -91,9 +91,19 @@ fn add_other_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
 
             seen[tbl] = true
 
+            local keys = {}
+            for k, v in pairs(tbl) do
+                keys[#keys + 1] = k
+            end
+
+            table.sort(keys, function(a, b) return tostring(a) < tostring(b) end)
+
             io.write(("\t"):rep(depth))
             io.write("{\n")
-            for k, v in pairs(tbl) do
+            for i = 1, #keys do
+                local k = keys[i]
+                local v = tbl[k]
+
                 local k_formatted
                 local ktype = type(k)
                 if ktype == "string" then
