@@ -55,7 +55,7 @@ gtk.MainContext            = {
 
     ---@param self MainContext
     ---@param callback fun():nil
-    spawn_local = function(self, callback) end
+    spawn_local = function(self, callback) end,
 
     ---@param self MainContext
     ---@param priority Priority

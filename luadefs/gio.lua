@@ -165,7 +165,7 @@ local SocketConnection = {
 
     ---@async
     ---@param self SocketConnection
-    close = function() end
+    close = function(self) end
 }
 
 ---@class SocketClient
