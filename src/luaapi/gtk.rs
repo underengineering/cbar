@@ -267,6 +267,14 @@ fn add_button_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             Ok(())
         });
 
+        reg.add_method(
+            "set_child",
+            |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
+                this.set_child(child.as_deref());
+                Ok(())
+            },
+        );
+
         add_widget_methods(reg);
     })?;
     let button = lua.create_table()?;

@@ -247,7 +247,11 @@ gtk.Button                 = {
 
     ---@param self Button
     ---@param label string
-    set_label = function(self, label) end
+    set_label = function(self, label) end,
+
+    --@param self Button
+    --@param child Widget
+    set_child = function(self, child) end
 }
 
 ---@class CheckButton : WidgetImpl
