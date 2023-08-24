@@ -25,5 +25,19 @@ utils = {
 
     ---@async
     ---@param secs number
-    sleep = function(secs) end
+    sleep = function(secs) end,
+}
+
+utils.json = {
+    ---@param tbl table
+    ---@return string
+    to_string = function(tbl) end,
+
+    ---@param tbl table
+    ---@return string
+    to_string_pretty = function(tbl) end,
+
+    ---@param str string
+    ---@return table
+    from_str = function(str) end,
 }

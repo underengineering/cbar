@@ -2,6 +2,8 @@ use gtk::glib;
 use mlua::prelude::*;
 use std::time::Duration;
 
+use super::json::add_json_api;
+
 fn add_grass_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
     utils_table.set(
         "scss_from_path",
@@ -146,6 +148,7 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     add_grass_api(lua, &utils_table)?;
     add_icons_api(lua, &utils_table)?;
     add_tokio_api(lua, &utils_table)?;
+    add_json_api(lua, &utils_table)?;
     add_other_api(lua, &utils_table)?;
 
     Ok(utils_table)
