@@ -80,12 +80,63 @@ fn add_tokio_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
+fn add_other_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
+    utils_table.set(
+        "print_table",
+        lua.load(
+            r#"
+            local tbl, seen, depth = ...
+            seen = seen or {}
+            depth = depth or 0
+
+            seen[tbl] = true
+
+            io.write(("\t"):rep(depth))
+            io.write("{\n")
+            for k, v in pairs(tbl) do
+                local k_formatted
+                local ktype = type(k)
+                if ktype == "string" then
+                    k_formatted = ("\"%s\""):format(k:gsub("\n", "\\n"))
+                else
+                    k_formatted = k
+                end
+
+                local v_formatted
+                local vtype = type(v)
+                if vtype == "table" and not seen[v] then
+                    io.write(("\t"):rep(depth + 1))
+                    io.write(("[%s] =\n"):format(k_formatted))
+                    utils.print_table(v, seen, depth + 1)
+                    io.write(",\n")
+                    goto continue
+                elseif vtype == "string" then
+                    v_formatted = ("\"%s\""):format(k:gsub("\n", "\\n"))
+                else
+                    v_formatted = v
+                end
+
+                io.write(("\t"):rep(depth + 1))
+                io.write(("[%s] = %s,\n"):format(k_formatted, v_formatted))
+                ::continue::
+            end
+            io.write(("\t"):rep(depth))
+            io.write("}")
+            "#,
+        )
+        .into_function()?,
+    )?;
+
+    Ok(())
+}
+
 pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     let utils_table = lua.create_table()?;
 
     add_grass_api(lua, &utils_table)?;
     add_icons_api(lua, &utils_table)?;
     add_tokio_api(lua, &utils_table)?;
+    add_other_api(lua, &utils_table)?;
 
     Ok(utils_table)
 }
