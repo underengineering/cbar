@@ -26,6 +26,11 @@ utils = {
     ---@async
     ---@param secs number
     sleep = function(secs) end,
+
+    ---@param tbl table
+    ---@param seen table?
+    ---@param depth integer?
+    print_table = function(tbl, seen, depth) end
 }
 
 utils.json = {
