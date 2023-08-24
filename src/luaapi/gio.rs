@@ -154,18 +154,19 @@ fn add_subprocess_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
                     .communicate_future(data.map(|x| Bytes::from(x.as_bytes())).as_ref())
                     .await
                     .into_lua_err()?;
-                if stdout.is_some() && stderr.is_some() {
-                    let stdout = lua.create_string(stdout.as_deref().unwrap())?;
-                    let stderr = lua.create_string(stderr.as_deref().unwrap())?;
-                    let values = LuaMultiValue::from_vec(vec![
-                        LuaValue::String(stdout),
-                        LuaValue::String(stderr),
-                    ]);
 
-                    Ok(values)
-                } else {
-                    Ok(LuaMultiValue::new())
-                }
+                let values = vec![
+                    match stdout {
+                        Some(stdout) => LuaValue::String(lua.create_string(&*stdout)?),
+                        None => LuaValue::Nil,
+                    },
+                    match stderr {
+                        Some(stderr) => LuaValue::String(lua.create_string(&*stderr)?),
+                        None => LuaValue::Nil,
+                    },
+                ];
+
+                Ok(LuaMultiValue::from_vec(values))
             },
         );
 
@@ -173,18 +174,19 @@ fn add_subprocess_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
             "communicate",
             |lua, this, data: Option<String>| async move {
                 let (stdout, stderr) = this.communicate_utf8_future(data).await.into_lua_err()?;
-                if stdout.is_some() && stderr.is_some() {
-                    let stdout = lua.create_string(stdout.unwrap().as_str())?;
-                    let stderr = lua.create_string(stderr.unwrap().as_str())?;
-                    let values = LuaMultiValue::from_vec(vec![
-                        LuaValue::String(stdout),
-                        LuaValue::String(stderr),
-                    ]);
 
-                    Ok(values)
-                } else {
-                    Ok(LuaMultiValue::new())
-                }
+                let values = vec![
+                    match stdout {
+                        Some(stdout) => LuaValue::String(lua.create_string(&*stdout)?),
+                        None => LuaValue::Nil,
+                    },
+                    match stderr {
+                        Some(stderr) => LuaValue::String(lua.create_string(&*stderr)?),
+                        None => LuaValue::Nil,
+                    },
+                ];
+
+                Ok(LuaMultiValue::from_vec(values))
             },
         );
 
