@@ -70,7 +70,11 @@ fn format_lua_error(err: &LuaError) -> String {
             )
         }
         LuaError::ExternalError(err) => {
-            format!("External error:\n\t{:?}", err)
+            if let Some(lua_err) = err.downcast_ref::<LuaError>() {
+                format!("External error:\n{}", LuaErrorWrapper(lua_err.clone()))
+            } else {
+                format!("External error:\n{:?}", err)
+            }
         }
         err => {
             format!("Error: {:?}", err)
