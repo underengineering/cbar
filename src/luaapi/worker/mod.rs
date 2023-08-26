@@ -1,8 +1,4 @@
-use std::{
-    rc::Rc,
-    sync::mpsc::{Receiver, Sender},
-};
-
+use crossbeam::channel::{Receiver, Sender};
 use mlua::prelude::*;
 
 mod error;
@@ -23,7 +19,7 @@ fn add_worker_api(lua: &Lua, worker_table: &LuaTable) -> LuaResult<()> {
         })
     })?;
 
-    lua.register_userdata_type::<Rc<Receiver<WorkerEvent>>>(|reg| {
+    lua.register_userdata_type::<Receiver<WorkerEvent>>(|reg| {
         reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
             lua.create_string("Receiver<WorkerData> {}")
         });
@@ -62,7 +58,7 @@ fn add_worker_api(lua: &Lua, worker_table: &LuaTable) -> LuaResult<()> {
         });
 
         reg.add_method("receiver", |lua, this, ()| {
-            lua.create_any_userdata(this.receiver().clone())
+            lua.create_any_userdata(this.receiver())
         });
     })?;
 

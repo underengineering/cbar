@@ -1,16 +1,11 @@
-use std::{
-    rc::Rc,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        mpsc::{self, Receiver, Sender},
-        Arc,
-    },
-};
-
-use mlua::prelude::*;
-
 use super::error::Error;
 use crate::luaapi::{gio, gtk, hyprland, pulseaudio, sysinfo, utf8, utils};
+use crossbeam::channel::{self, Receiver, Sender};
+use mlua::prelude::*;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 
 pub enum WorkerData {
     Nil,
@@ -96,15 +91,15 @@ pub enum WorkerEvent {
 pub struct Worker {
     dead: Arc<AtomicBool>,
     sender: Sender<WorkerData>,
-    receiver: Rc<Receiver<WorkerEvent>>,
+    receiver: Receiver<WorkerEvent>,
 }
 
 impl Worker {
     pub fn start(code: String, name: Option<String>) -> Result<Self, Error> {
         // worker -> main
-        let (tx_, rx) = mpsc::channel();
+        let (tx_, rx) = channel::unbounded();
         // main -> worker
-        let (tx, rx_) = mpsc::channel();
+        let (tx, rx_) = channel::unbounded();
 
         let dead = Arc::new(AtomicBool::new(false));
         let dead_ref = dead.clone();
@@ -130,7 +125,7 @@ impl Worker {
         Ok(Self {
             dead,
             sender: tx,
-            receiver: Rc::new(rx),
+            receiver: rx,
         })
     }
 
@@ -142,8 +137,8 @@ impl Worker {
         self.sender.clone()
     }
 
-    pub fn receiver(&self) -> &Rc<Receiver<WorkerEvent>> {
-        &self.receiver
+    pub fn receiver(&self) -> Receiver<WorkerEvent> {
+        self.receiver.clone()
     }
 
     fn add_channels_api(lua: &Lua) -> LuaResult<()> {
