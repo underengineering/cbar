@@ -14,12 +14,20 @@ use self::worker::{Worker, WorkerData, WorkerEvent};
 
 fn add_worker_api(lua: &Lua, worker_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<Sender<WorkerData>>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("Sender<WorkerData {}")
+        });
+
         reg.add_method("send", |lua, this, value: LuaValue| {
             this.send(WorkerData::from_lua(value, lua)?).into_lua_err()
         })
     })?;
 
     lua.register_userdata_type::<Rc<Receiver<WorkerEvent>>>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("Receiver<WorkerData> {}")
+        });
+
         reg.add_method("recv", |lua, this, ()| {
             Ok(match this.recv().into_lua_err()? {
                 WorkerEvent::UserData(data) => data.into_lua(lua)?,
@@ -30,6 +38,12 @@ fn add_worker_api(lua: &Lua, worker_table: &LuaTable) -> LuaResult<()> {
     })?;
 
     lua.register_userdata_type::<Worker>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("Worker {}")
+        });
+
+        reg.add_method("dead", |_, this, ()| Ok(this.dead()));
+
         reg.add_method("join", |_, this, ()| {
             let receiver = this.receiver();
             loop {

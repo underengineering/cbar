@@ -1,6 +1,10 @@
 use std::{
     rc::Rc,
-    sync::mpsc::{self, Receiver, Sender},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc::{self, Receiver, Sender},
+        Arc,
+    },
 };
 
 use mlua::prelude::*;
@@ -90,6 +94,7 @@ pub enum WorkerEvent {
 }
 
 pub struct Worker {
+    dead: Arc<AtomicBool>,
     sender: Sender<WorkerData>,
     receiver: Rc<Receiver<WorkerEvent>>,
 }
@@ -101,6 +106,8 @@ impl Worker {
         // main -> worker
         let (tx, rx_) = mpsc::channel();
 
+        let dead = Arc::new(AtomicBool::new(false));
+        let dead_ref = dead.clone();
         std::thread::spawn(move || {
             let lua = unsafe { Lua::unsafe_new() };
             lua.load_from_std_lib(LuaStdLib::ALL).unwrap();
@@ -115,12 +122,20 @@ impl Worker {
                 Ok(_) => tx_.send(WorkerEvent::Done),
                 Err(err) => tx_.send(WorkerEvent::Error(err)),
             }
+            .unwrap();
+
+            dead_ref.store(true, std::sync::atomic::Ordering::Relaxed);
         });
 
         Ok(Self {
+            dead,
             sender: tx,
             receiver: Rc::new(rx),
         })
+    }
+
+    pub fn dead(&self) -> bool {
+        self.dead.load(Ordering::Relaxed)
     }
 
     pub fn sender(&self) -> Sender<WorkerData> {

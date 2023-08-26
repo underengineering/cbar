@@ -30,6 +30,11 @@ worker.Worker = {
     ---@return Worker
     start = function(code, name) end,
 
+    -- Returns whether worker has terminated
+    ---@param self
+    ---@return boolean
+    dead = function(self) end,
+
     -- Waits for worker termination. Propagates any error that was generated
     ---@param self Worker
     join = function(self) end,
