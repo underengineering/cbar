@@ -64,6 +64,7 @@ fn main() -> Result<(), Error> {
     let sysinfo_table = luaapi::sysinfo::add_api(&lua)?;
     let pulseaudio_table = luaapi::pulseaudio::add_api(&lua)?;
     let utf8_table = luaapi::utf8::add_api(&lua)?;
+    let worker_table = luaapi::worker::add_api(&lua)?;
     globals.set("gtk", gtk_table)?;
     globals.set("gio", gio_table)?;
     globals.set("utils", utils_table)?;
@@ -71,6 +72,7 @@ fn main() -> Result<(), Error> {
     globals.set("sysinfo", sysinfo_table)?;
     globals.set("pulseaudio", pulseaudio_table)?;
     globals.set("utf8", utf8_table)?;
+    globals.set("worker", worker_table)?;
 
     // Set current directory to the config path
     env::set_current_dir(
