@@ -39,13 +39,38 @@ fn format_lua_error(err: &LuaError) -> String {
             cause,
         } => {
             format!(
-                "Bad argument error:\nWrong argument {} passed to {}\nCaused by: {}",
+                "Bad argument error:\n\tWrong argument {} passed to {}\nCaused by: {}",
                 name.as_deref()
                     .map(|x| format!("`{}`", x))
                     .unwrap_or(format!("at {}", pos)),
                 to.as_deref().unwrap_or("(unknown)"),
                 format_lua_error(cause)
             )
+        }
+        LuaError::ToLuaConversionError { from, to, message } => {
+            format!(
+                "To lua conversion error:\n\tFailed to convert `{}` to `{}`{}",
+                from,
+                to,
+                message
+                    .as_deref()
+                    .map(|x| format!(": {}", x))
+                    .unwrap_or(String::new())
+            )
+        }
+        LuaError::FromLuaConversionError { from, to, message } => {
+            format!(
+                "From lua conversion error:\n\tFailed to convert `{}` to `{}`{}",
+                from,
+                to,
+                message
+                    .as_deref()
+                    .map(|x| format!(": {}", x))
+                    .unwrap_or(String::new())
+            )
+        }
+        LuaError::ExternalError(err) => {
+            format!("External error:\n\t{:?}", err)
         }
         err => {
             format!("Error: {:?}", err)
