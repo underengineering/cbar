@@ -389,6 +389,95 @@ fn add_label_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
+fn add_entry_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+    lua.register_userdata_type::<gtk::EntryBuffer>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("EntryBuffer {}")
+        });
+
+        reg.add_method("connect_deleted_text", |_, this, f: LuaOwnedFunction| {
+            this.connect_local("deleted-text", true, move |values| {
+                if let [_, position, n_chars] = values {
+                    let position = position.get::<u32>().unwrap();
+                    let n_chars = n_chars.get::<u32>().unwrap();
+                    f.call::<_, ()>((position, n_chars)).unwrap();
+                }
+
+                None
+            });
+
+            Ok(())
+        });
+
+        reg.add_method("connect_inserted_text", |_, this, f: LuaOwnedFunction| {
+            this.connect_local("inserted-text", true, move |values| {
+                if let [_, position, chars, n_chars] = values {
+                    let position = position.get::<u32>().unwrap();
+                    let chars = chars.get::<String>().unwrap();
+                    let n_chars = n_chars.get::<u32>().unwrap();
+                    f.call::<_, ()>((position, chars, n_chars)).unwrap();
+                }
+
+                None
+            });
+
+            Ok(())
+        });
+
+        reg.add_method("text", |lua, this, ()| lua.create_string(this.text()));
+
+        reg.add_method("set_text", |_, this, chars: String| {
+            this.set_text(chars);
+            Ok(())
+        })
+    })?;
+
+    lua.register_userdata_type::<gtk::Entry>(|reg| {
+        register_signals!(reg, [activate]);
+
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("Entry {}")
+        });
+
+        reg.add_method("buffer", |lua, this, ()| {
+            lua.create_any_userdata(this.buffer())
+        });
+
+        reg.add_method("set_placeholder_text", |_, this, text: Option<String>| {
+            this.set_placeholder_text(text.as_deref());
+            Ok(())
+        });
+
+        reg.add_method("set_alignment", |_, this, xalign: f32| {
+            gtk::prelude::EntryExt::set_alignment(this, xalign);
+            Ok(())
+        });
+
+        reg.add_method("set_visibility", |_, this, visible: bool| {
+            this.set_visibility(visible);
+            Ok(())
+        });
+
+        reg.add_method("set_max_length", |_, this, max: i32| {
+            this.set_max_length(max);
+            Ok(())
+        });
+
+        add_widget_methods(reg);
+    })?;
+    let entry = lua.create_table()?;
+    entry.set(
+        "new",
+        lua.create_function(|lua, ()| {
+            let entry = gtk::Entry::new();
+            lua.create_any_userdata(entry)
+        })?,
+    )?;
+    gtk_table.set("Entry", entry)?;
+
+    Ok(())
+}
+
 fn add_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::Box>(|reg| {
         reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
@@ -805,6 +894,7 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     add_application_api(lua, &gtk_table)?;
     add_application_window_api(lua, &gtk_table)?;
     add_label_api(lua, &gtk_table)?;
+    add_entry_api(lua, &gtk_table)?;
     add_button_api(lua, &gtk_table)?;
     add_check_button_api(lua, &gtk_table)?;
     add_box_api(lua, &gtk_table)?;

@@ -303,6 +303,55 @@ gtk.Label                  = {
     set_markup = function(self, markup) end
 }
 
+---@class EntryBuffer
+local EntryBuffer          = {
+    ---@param self EntryBuffer
+    ---@return string
+    text = function(self) end,
+
+    ---@param self EntryBuffer
+    ---@param callback fun(position: integer, n_chars: integer):nil
+    connect_deleted_text = function(self, callback) end,
+
+    ---@param self EntryBuffer
+    ---@param callback fun(position: integer, chars:string, n_chars: integer):nil
+    connect_inserted_text = function(self, callback) end,
+
+    ---@param self EntryBuffer
+    ---@param chars string
+    set_text = function(self, chars) end
+}
+
+---@class Entry : WidgetImpl
+gtk.Entry                  = {
+    ---@return Entry
+    new = function() end,
+
+    ---@param self Entry
+    ---@param callback fun():nil
+    connect_activate = function(self, callback) end,
+
+    ---@param self Entry
+    ---@return EntryBuffer
+    buffer = function(self) end,
+
+    ---@param self Entry
+    ---@param text string?
+    set_placeholder_text = function(self, text) end,
+
+    ---@param self Entry
+    ---@param xalign number
+    set_alignment = function(self, xalign) end,
+
+    ---@param self Entry
+    ---@param visible boolean
+    set_visibility = function(self, visible) end,
+
+    ---@param self Entry
+    ---@param max integer
+    set_max_length = function(self, max) end
+}
+
 ---@class Image : WidgetImpl
 gtk.Image                  = {
     ---@return Image
