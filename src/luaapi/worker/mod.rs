@@ -6,6 +6,8 @@ use std::{
 use mlua::prelude::*;
 
 mod error;
+
+#[allow(clippy::module_inception)]
 mod worker;
 
 use self::worker::{Worker, WorkerData, WorkerEvent};
