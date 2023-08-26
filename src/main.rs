@@ -8,7 +8,7 @@ mod luaapi;
 mod system_info;
 mod utils;
 
-use crate::error::Error;
+use crate::error::{Error, LuaErrorWrapper};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -87,9 +87,14 @@ fn main() -> Result<(), Error> {
         .into_iter()
         .map(|x| lua.create_string(x).expect("Failed to create string"))
         .map(LuaValue::String);
-    lua.load(config)
+    let result = lua
+        .load(config)
         .set_name(file_name)
-        .call::<_, ()>(LuaMultiValue::from_iter(lua_args))?;
+        .call::<_, ()>(LuaMultiValue::from_iter(lua_args));
+    if let Err(lua_err) = result {
+        eprintln!("{}", LuaErrorWrapper(lua_err));
+        std::process::exit(1)
+    }
 
     Ok(())
 }
