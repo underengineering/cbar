@@ -10,7 +10,14 @@ worker = {}
 local WorkerSender = {
     ---@param self WorkerSender
     ---@param value WorkerData
-    send = function(self, value) end
+    send = function(self, value) end,
+
+    -- Tries to send a value to the worker.
+    -- Returns whether the value has been sent
+    ---@param self WorkerSender
+    ---@param value WorkerData
+    ---@return boolean
+    try_send = function(self, value) end
 }
 
 ---@class WorkerReceiver
@@ -20,7 +27,14 @@ local WorkerReceiver = {
     -- Returns nil if worker has stopped
     ---@param self WorkerReceiver
     ---@return WorkerData?
-    recv = function(self) end
+    recv = function(self) end,
+
+    -- Receives data from workers channel.
+    -- Propagates any error that was generated.
+    -- Returns false,nil if no data is available
+    ---@param self WorkerReceiver
+    ---@return boolean,WorkerData?
+    try_recv = function(self) end
 }
 
 ---@class Worker
