@@ -1,16 +1,16 @@
 ---@diagnostic disable:missing-return
 ---@diagnostic disable:lowercase-global
 ---@diagnostic disable:unused-local
-gtk                            = {}
+gtk                        = {}
 
 ---@enum Orientation
-gtk.Orientation                = {
+gtk.Orientation            = {
     Horizontal = 0,
     Vertical = 1,
 }
 
 ---@enum Align
-gtk.Align                      = {
+gtk.Align                  = {
     Fill = 0,
     Start = 1,
     End = 2,
@@ -19,9 +19,9 @@ gtk.Align                      = {
 }
 
 ---@class Priority
-local Priority                 = {}
+local Priority             = {}
 
-gtk.Priority                   = {
+gtk.Priority               = {
     ---@type Priority
     HIGH = nil,
     ---@type Priority
@@ -35,7 +35,7 @@ gtk.Priority                   = {
 }
 
 ---@enum RevealerTransitionType
-gtk.RevealerTransitionType     = {
+gtk.RevealerTransitionType = {
     None = 0,
     Crossfade = 1,
     SlideRight = 2,
@@ -49,7 +49,7 @@ gtk.RevealerTransitionType     = {
 }
 
 ---@class MainContext
-gtk.MainContext                = {
+gtk.MainContext            = {
     ---@return MainContext
     default = function() end,
 
@@ -63,7 +63,7 @@ gtk.MainContext                = {
     spawn_local_with_priority = function(self, priority, callback) end
 }
 
----@class ApplicationFlagsCtor
+---@class ApplicationFlags
 ---@field is_service boolean?
 ---@field is_launcher boolean?
 ---@field handles_open boolean?
@@ -74,17 +74,10 @@ gtk.MainContext                = {
 ---@field allow_replacement boolean?
 ---@field replace boolean?
 
----@class ApplicationFlags
-gtk.ApplicationFlags           = {
-    ---@param flags ApplicationFlagsCtor
-    ---@return ApplicationFlags
-    new = function(flags) end
-}
-
 ---@class Application
-gtk.Application                = {
+gtk.Application            = {
     ---@param id string
-    ---@param flags ApplicationFlags
+    ---@param flags ApplicationFlags?
     ---@return Application
     new = function(id, flags) end,
 
@@ -105,7 +98,7 @@ gtk.Application                = {
 }
 
 ---@class WidgetImpl
-local WidgetImpl               = {
+local WidgetImpl           = {
     ---@param self WidgetImpl
     ---@return Widget
     upcast = function(self) end,
@@ -166,10 +159,10 @@ local WidgetImpl               = {
 }
 
 ---@class Widget
-local Widget                   = {}
+local Widget               = {}
 
 ---@class ApplicationWindow : WidgetImpl
-gtk.ApplicationWindow          = {
+gtk.ApplicationWindow      = {
     ---@param app Application
     ---@return ApplicationWindow
     new = function(app) end,
@@ -190,7 +183,7 @@ gtk.ApplicationWindow          = {
 }
 
 ---@class Box : WidgetImpl
-gtk.Box                        = {
+gtk.Box                    = {
     ---@param orientation Orientation
     ---@param spacing number?
     ---@return Box
@@ -205,7 +198,7 @@ gtk.Box                        = {
     remove = function(self, widget) end
 }
 ---@class Grid : WidgetImpl
-gtk.Grid                       = {
+gtk.Grid                   = {
     ---@return Grid
     new = function() end,
 
@@ -223,7 +216,7 @@ gtk.Grid                       = {
 }
 
 ---@class CenterBox : WidgetImpl
-gtk.CenterBox                  = {
+gtk.CenterBox              = {
     ---@return CenterBox
     new = function() end,
 
@@ -241,7 +234,7 @@ gtk.CenterBox                  = {
 }
 
 ---@class Button : WidgetImpl
-gtk.Button                     = {
+gtk.Button                 = {
     ---@return Button
     new = function() end,
 
@@ -263,7 +256,7 @@ gtk.Button                     = {
 }
 
 ---@class CheckButton : WidgetImpl
-gtk.CheckButton                = {
+gtk.CheckButton            = {
     ---@return CheckButton
     new              = function() end,
 
@@ -297,7 +290,7 @@ gtk.CheckButton                = {
 }
 
 ---@class Label : WidgetImpl
-gtk.Label                      = {
+gtk.Label                  = {
     ---@param str? string
     ---@return Label
     new = function(str) end,
@@ -312,7 +305,7 @@ gtk.Label                      = {
 }
 
 ---@class EntryBuffer
-local EntryBuffer              = {
+local EntryBuffer          = {
     ---@param self EntryBuffer
     ---@return string
     text = function(self) end,
@@ -331,7 +324,7 @@ local EntryBuffer              = {
 }
 
 ---@class Entry : WidgetImpl
-gtk.Entry                      = {
+gtk.Entry                  = {
     ---@return Entry
     new = function() end,
 
@@ -361,7 +354,7 @@ gtk.Entry                      = {
 }
 
 ---@class Image : WidgetImpl
-gtk.Image                      = {
+gtk.Image                  = {
     ---@return Image
     new = function() end,
 
@@ -395,7 +388,7 @@ gtk.Image                      = {
 }
 
 ---@class Revealer : WidgetImpl
-gtk.Revealer                   = {
+gtk.Revealer               = {
     ---@return Revealer
     new = function() end,
 
@@ -417,7 +410,7 @@ gtk.Revealer                   = {
 }
 
 ---@class EventControllerImpl
-local EventControllerImpl      = {
+local EventControllerImpl  = {
     ---@param self EventControllerImpl
     ---@return EventController
     upcast = function(self) end
@@ -425,36 +418,29 @@ local EventControllerImpl      = {
 
 ---@class EventController = {}
 
----@class EventControllerScrollFlagsCtor
+---@class EventControllerScrollFlags
 ---@field vertical boolean?
 ---@field horizontal boolean?
 ---@field discrete boolean?
 ---@field kinetic boolean?
 ---@field both_axes boolean?
 
----@class EventControllerScrollFlags
-gtk.EventControllerScrollFlags = {
-    ---@param flags EventControllerScrollFlagsCtor
-    ---@return EventControllerScrollFlags
-    new = function(flags) end
-}
-
 ---@class ModifierType
----@field shift boolean
----@field lock boolean
----@field control boolean
----@field alt boolean
----@field button1 boolean
----@field button2 boolean
----@field button3 boolean
----@field button4 boolean
----@field button5 boolean
----@field super boolean
----@field hyper boolean
----@field meta boolean
+---@field shift boolean?
+---@field lock boolean?
+---@field control boolean?
+---@field alt boolean?
+---@field button1 boolean?
+---@field button2 boolean?
+---@field button3 boolean?
+---@field button4 boolean?
+---@field button5 boolean?
+---@field super boolean?
+---@field hyper boolean?
+---@field meta boolean?
 
 ---@class EventControllerKey : EventControllerImpl
-gtk.EventControllerKey         = {
+gtk.EventControllerKey     = {
     ---@return EventControllerKey
     new = function() end,
 
@@ -468,8 +454,8 @@ gtk.EventControllerKey         = {
 }
 
 ---@class EventControllerScroll : EventControllerImpl
-gtk.EventControllerScroll      = {
-    ---@param flags EventControllerScrollFlags
+gtk.EventControllerScroll  = {
+    ---@param flags EventControllerScrollFlags?
     ---@return EventControllerScroll
     new = function(flags) end,
 
@@ -491,7 +477,7 @@ gtk.EventControllerScroll      = {
 }
 
 ---@class EventControllerMotion : EventControllerImpl
-gtk.EventControllerMotion      = {
+gtk.EventControllerMotion  = {
     ---@return EventControllerMotion
     new = function() end,
 
@@ -509,7 +495,7 @@ gtk.EventControllerMotion      = {
 }
 
 ---@class EventControllerFocus : EventControllerImpl
-gtk.EventControllerFocus       = {
+gtk.EventControllerFocus   = {
     ---@return EventControllerFocus
     new = function() end,
 
@@ -523,7 +509,7 @@ gtk.EventControllerFocus       = {
 }
 
 ---@class CssProvider
-gtk.CssProvider                = {
+gtk.CssProvider            = {
     ---@return CssProvider
     new = function() end,
 

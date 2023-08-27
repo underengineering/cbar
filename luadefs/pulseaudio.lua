@@ -60,7 +60,7 @@ pulseaudio.Mainloop = {
 ---@field default_sink_name string
 ---@field default_source_name string
 
----@class InterestMaskSetMasks
+---@class InterestMaskSet
 ---@field sink boolean?
 ---@field source boolean?
 ---@field sink_input boolean?
@@ -71,13 +71,6 @@ pulseaudio.Mainloop = {
 ---@field server boolean?
 ---@field card boolean?
 ---@field all boolean?
-
----@class InterestMaskSet
-pulseaudio.InterestMaskSet = {
-    ---@param masks InterestMaskSetMasks
-    ---@return InterestMaskSet
-    new = function(masks) end
-}
 
 ---@class Volume
 ---@field NORMAL integer
@@ -106,7 +99,7 @@ pulseaudio.Context = {
     get_state = function(self) end,
 
     ---@param self Context
-    ---@param mask InterestMaskSet
+    ---@param mask InterestMaskSet?
     ---@param callback fun(success: boolean)
     subscribe = function(self, mask, callback) end,
 

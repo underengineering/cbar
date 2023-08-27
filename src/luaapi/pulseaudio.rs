@@ -1,8 +1,7 @@
 use gtk::glib::MainContext;
 use mlua::{prelude::*, IntoLua};
-use paste::paste;
 
-use crate::utils::pack_mask;
+use super::wrappers::InterestMaskSetWrapper;
 
 macro_rules! push_enum {
     ($tbl:ident, $name:ty, [$($variant:ident),+]) => {
@@ -140,35 +139,6 @@ fn add_mainloop_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
 }
 
 fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
-    let interest_mask = lua.create_table()?;
-    interest_mask.set(
-        "new",
-        lua.create_function(|lua, masks: LuaTable| {
-            use pulse::context::subscribe::InterestMaskSet;
-            let mut mask = InterestMaskSet::NULL;
-            pack_mask!(
-                masks,
-                mask,
-                InterestMaskSet,
-                [
-                    SINK,
-                    SOURCE,
-                    SINK_INPUT,
-                    SOURCE_OUTPUT,
-                    MODULE,
-                    CLIENT,
-                    SAMPLE_CACHE,
-                    SERVER,
-                    CARD,
-                    ALL
-                ]
-            );
-
-            lua.create_any_userdata(mask)
-        })?,
-    )?;
-    pulseaudio_table.set("InterestMaskSet", interest_mask)?;
-
     let volume = lua.create_table()?;
     volume.set("NORMAL", pulse::volume::Volume::NORMAL.0)?;
     volume.set("MUTED", pulse::volume::Volume::MUTED.0)?;
@@ -204,9 +174,8 @@ fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
 
         reg.add_method_mut(
             "subscribe",
-            |_, this, (mask, f): (LuaAnyUserData, LuaOwnedFunction)| {
-                let mask = mask.take::<pulse::context::subscribe::InterestMaskSet>()?;
-                this.subscribe(mask, move |success| {
+            |_, this, (mask, f): (InterestMaskSetWrapper, LuaOwnedFunction)| {
+                this.subscribe(mask.0, move |success| {
                     f.call::<_, ()>(success).unwrap();
                 });
 

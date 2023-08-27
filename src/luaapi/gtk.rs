@@ -1,17 +1,15 @@
-use gtk::{
-    gio::{ApplicationFlags, Icon},
-    glib,
-    prelude::*,
-    Application, ApplicationWindow,
-};
+use gtk::{gio::Icon, glib, prelude::*, Application, ApplicationWindow};
 use mlua::prelude::*;
 use paste::paste;
 
 use super::{
     enums,
-    wrappers::{GStringWrapper, ModifierTypeWrapper},
+    wrappers::{
+        ApplicationFlagsWrapper, EventControllerScrollFlagsWrapper, GStringWrapper,
+        ModifierTypeWrapper,
+    },
 };
-use crate::utils::{pack_mask, register_signals};
+use crate::utils::register_signals;
 
 macro_rules! push_enum {
     ($tbl:ident, $ns:ident, $name:ident, [$($variant:ident),+]) => {
@@ -148,12 +146,6 @@ fn add_enums(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     );
     gtk_table.set("RevealerTransitionType", transition_type)?;
 
-    // gtk_table.set("PRIORITY_LOW", glib::ffi::G_PRIORITY_LOW)?;
-    // gtk_table.set("PRIORITY_DEFAULT", glib::ffi::G_PRIORITY_DEFAULT)?;
-    // gtk_table.set("PRIORITY_DEFAULT_IDLE", glib::ffi::G_PRIORITY_DEFAULT_IDLE)?;
-    // gtk_table.set("PRIORITY_HIGH", glib::ffi::G_PRIORITY_HIGH)?;
-    // gtk_table.set("PRIORITY_HIGH_IDLE", glib::ffi::G_PRIORITY_HIGH_IDLE)?;
-
     Ok(())
 }
 
@@ -175,33 +167,6 @@ fn add_global_functions(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 }
 
 fn add_application_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    let app_flags = lua.create_table()?;
-    app_flags.set(
-        "new",
-        lua.create_function(|lua, flags_table: LuaTable| {
-            let mut flags = ApplicationFlags::FLAGS_NONE;
-            pack_mask!(
-                flags_table,
-                flags,
-                ApplicationFlags,
-                [
-                    IS_SERVICE,
-                    IS_LAUNCHER,
-                    HANDLES_OPEN,
-                    HANDLES_COMMAND_LINE,
-                    SEND_ENVIRONMENT,
-                    NON_UNIQUE,
-                    CAN_OVERRIDE_APP_ID,
-                    ALLOW_REPLACEMENT,
-                    REPLACE
-                ]
-            );
-
-            lua.create_any_userdata(flags)
-        })?,
-    )?;
-    gtk_table.set("ApplicationFlags", app_flags)?;
-
     lua.register_userdata_type::<Application>(|reg| {
         register_signals!(reg, [activate, startup, shutdown]);
 
@@ -218,8 +183,8 @@ fn add_application_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     app.set(
         "new",
         lua.create_function(
-            |lua, (id, flags): (Option<String>, LuaUserDataRef<ApplicationFlags>)| {
-                let app = Application::new(id, *flags);
+            |lua, (id, flags): (Option<String>, ApplicationFlagsWrapper)| {
+                let app = Application::new(id, flags.0);
                 lua.create_any_userdata(app)
             },
         )?,
@@ -747,22 +712,6 @@ fn add_revealer_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 }
 
 fn add_event_controller_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    let event_controller_scroll_flags = lua.create_table()?;
-    event_controller_scroll_flags.set(
-        "new",
-        lua.create_function(|lua, flags_table: LuaTable| {
-            let mut flags = gtk::EventControllerScrollFlags::NONE;
-            pack_mask!(
-                flags_table,
-                flags,
-                gtk::EventControllerScrollFlags,
-                [VERTICAL, HORIZONTAL, DISCRETE, KINETIC, BOTH_AXES]
-            );
-            lua.create_any_userdata(flags)
-        })?,
-    )?;
-    gtk_table.set("EventControllerScrollFlags", event_controller_scroll_flags)?;
-
     lua.register_userdata_type::<gtk::EventControllerKey>(|reg| {
         reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
             lua.create_string("EventControllerKey {}")
@@ -841,12 +790,10 @@ fn add_event_controller_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     let event_controller_scroll = lua.create_table()?;
     event_controller_scroll.set(
         "new",
-        lua.create_function(
-            |lua, flags: LuaUserDataRef<gtk::EventControllerScrollFlags>| {
-                let event_controller = gtk::EventControllerScroll::new(*flags);
-                lua.create_any_userdata(event_controller)
-            },
-        )?,
+        lua.create_function(|lua, flags: EventControllerScrollFlagsWrapper| {
+            let event_controller = gtk::EventControllerScroll::new(flags.0);
+            lua.create_any_userdata(event_controller)
+        })?,
     )?;
     gtk_table.set("EventControllerScroll", event_controller_scroll)?;
 

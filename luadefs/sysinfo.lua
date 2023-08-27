@@ -4,20 +4,15 @@
 sysinfo = {}
 
 ---@class CpuRefreshKind
-sysinfo.CpuRefreshKind = {
-    ---@param specifics { frequency: boolean?, cpu_usage: boolean? }
-    ---@return CpuRefreshKind
-    new = function(specifics) end
-}
+---@field frequency boolean?
+---@field cpu_usage boolean?
 
 ---@class ProcessRefreshKind
-sysinfo.ProcessRefreshKind = {
-    ---@param specifics { cpu: boolean?, disk_usage: boolean?, user: boolean? }
-    ---@return ProcessRefreshKind
-    new = function(specifics) end
-}
+---@field cpu boolean?
+---@field disk_usage boolean?
+---@field user boolean?
 
----@class RefreshKindSpecifics
+---@class RefreshKind
 ---@field networks boolean?
 ---@field networks_list boolean?
 ---@field disks boolean?
@@ -28,13 +23,6 @@ sysinfo.ProcessRefreshKind = {
 ---@field users_list boolean?
 ---@field cpu CpuRefreshKind?
 ---@field processes ProcessRefreshKind?
-
----@class RefreshKind
-sysinfo.RefreshKind = {
-    ---@param kind RefreshKindSpecifics
-    ---@return RefreshKind
-    new = function(kind) end
-}
 
 ---@class Cpu
 ---@field name string
@@ -63,7 +51,7 @@ sysinfo.System = {
     ---@return System
     new_all = function() end,
 
-    ---@param refreshes RefreshKind
+    ---@param refreshes RefreshKind?
     ---@return System
     new_with_specifics = function(refreshes) end,
 
@@ -80,7 +68,7 @@ sysinfo.System = {
     refresh_cpu = function(self) end,
 
     ---@param self System
-    ---@param kind CpuRefreshKind
+    ---@param kind CpuRefreshKind?
     refresh_cpu_specifics = function(self, kind) end,
 
     ---@param self System
@@ -88,12 +76,12 @@ sysinfo.System = {
     refresh_process = function(self, pid) end,
 
     ---@param self System
-    ---@param kind ProcessRefreshKind
+    ---@param kind ProcessRefreshKind?
     refresh_processes_specifics = function(self, kind) end,
 
     ---@param self System
     ---@param pid number
-    ---@param kind ProcessRefreshKind
+    ---@param kind ProcessRefreshKind?
     refresh_process_specifics = function(self, pid, kind) end,
 
     ---@param self System
