@@ -352,6 +352,67 @@ fn add_check_button_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
+fn add_overlay_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+    lua.register_userdata_type::<gtk::Overlay>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("Overlay {}")
+        });
+
+        reg.add_method(
+            "set_child",
+            |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
+                this.set_child(child.as_deref());
+                Ok(())
+            },
+        );
+
+        reg.add_method(
+            "add_overlay",
+            |_, this, widget: LuaUserDataRef<gtk::Widget>| {
+                this.add_overlay(&*widget);
+                Ok(())
+            },
+        );
+
+        reg.add_method(
+            "remove_overlay",
+            |_, this, widget: LuaUserDataRef<gtk::Widget>| {
+                this.remove_overlay(&*widget);
+                Ok(())
+            },
+        );
+
+        reg.add_method(
+            "set_measure_overlay",
+            |_, this, (widget, measure): (LuaUserDataRef<gtk::Widget>, bool)| {
+                this.set_measure_overlay(&*widget, measure);
+                Ok(())
+            },
+        );
+
+        reg.add_method(
+            "set_clip_overlay",
+            |_, this, (widget, clip_overlay): (LuaUserDataRef<gtk::Widget>, bool)| {
+                this.set_clip_overlay(&*widget, clip_overlay);
+                Ok(())
+            },
+        );
+
+        add_widget_methods(reg);
+    })?;
+    let button = lua.create_table()?;
+    button.set(
+        "new",
+        lua.create_function(|lua, ()| {
+            let button = gtk::Overlay::new();
+            lua.create_any_userdata(button)
+        })?,
+    )?;
+    gtk_table.set("Overlay", button)?;
+
+    Ok(())
+}
+
 fn add_label_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::Label>(|reg| {
         reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
@@ -1050,6 +1111,7 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     add_global_functions(lua, &gtk_table)?;
     add_application_api(lua, &gtk_table)?;
     add_application_window_api(lua, &gtk_table)?;
+    add_overlay_api(lua, &gtk_table)?;
     add_label_api(lua, &gtk_table)?;
     add_entry_api(lua, &gtk_table)?;
     add_button_api(lua, &gtk_table)?;

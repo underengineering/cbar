@@ -303,6 +303,34 @@ gtk.CheckButton            = {
     set_label        = function(self, label) end,
 }
 
+---@class Overlay : WidgetImpl
+gtk.Overlay                = {
+    ---@return Overlay
+    new = function() end,
+
+    ---@param self Overlay
+    ---@param child Widget
+    set_child = function(self, child) end,
+
+    ---@param self Overlay
+    ---@param widget Widget
+    add_overlay = function(self, widget) end,
+
+    ---@param self Overlay
+    ---@param widget Widget
+    remove_overlay = function(self, widget) end,
+
+    ---@param self Overlay
+    ---@param widget Widget
+    ---@param measure boolean
+    set_measure_overlay = function(self, widget, measure) end,
+
+    ---@param self Overlay
+    ---@param widget Widget
+    ---@param clip_overlay boolean
+    set_clip_overlay = function(self, widget, clip_overlay) end,
+}
+
 ---@class Label : WidgetImpl
 gtk.Label                  = {
     ---@param str? string
