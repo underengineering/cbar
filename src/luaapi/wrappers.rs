@@ -1,4 +1,9 @@
-use gtk::{gdk::ModifierType, gio::ApplicationFlags, glib::GString, EventControllerScrollFlags};
+use gtk::{
+    gdk::ModifierType,
+    gio::{ApplicationFlags, SubprocessFlags},
+    glib::GString,
+    EventControllerScrollFlags,
+};
 use mlua::prelude::*;
 use paste::paste;
 use pulse::context::subscribe::InterestMaskSet;
@@ -166,6 +171,21 @@ impl<'lua> FromLua<'lua> for RefreshKindWrapper {
         })
     }
 }
+
+bitmask_from_lua_impl!(
+    SubprocessFlags,
+    NONE,
+    [
+        STDIN_PIPE,
+        STDIN_INHERIT,
+        STDOUT_PIPE,
+        STDOUT_SILENCE,
+        STDERR_PIPE,
+        STDERR_SILENCE,
+        STDERR_MERGE,
+        INHERIT_FDS
+    ]
+);
 
 bitmask_from_lua_impl!(
     EventControllerScrollFlags,

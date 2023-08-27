@@ -4,7 +4,7 @@ use gtk::{
     gio::{
         prelude::*, AppInfo, AppInfoMonitor, File, FileCreateFlags, InputStream,
         InputStreamAsyncBufRead, OutputStream, SocketClient, SocketConnection, Subprocess,
-        SubprocessFlags, UnixSocketAddress,
+        UnixSocketAddress,
     },
     glib::{Bytes, PRIORITY_DEFAULT},
 };
@@ -12,7 +12,9 @@ use mlua::prelude::*;
 use paste::paste;
 use std::{ffi::OsStr, path::Path};
 
-use crate::utils::{pack_mask, register_signals};
+use crate::utils::register_signals;
+
+use super::wrappers::SubprocessFlagsWrapper;
 
 fn add_async_read_buf_api(lua: &Lua) -> LuaResult<()> {
     lua.register_userdata_type::<InputStreamAsyncBufRead<InputStream>>(|reg| {
@@ -117,31 +119,6 @@ fn add_streams_api(lua: &Lua) -> LuaResult<()> {
 }
 
 fn add_subprocess_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
-    let subprocess_flags = lua.create_table()?;
-    subprocess_flags.set(
-        "new",
-        lua.create_function(|lua, flags_table: LuaTable| {
-            let mut flags = SubprocessFlags::empty();
-            pack_mask!(
-                flags_table,
-                flags,
-                SubprocessFlags,
-                [
-                    STDIN_PIPE,
-                    STDIN_INHERIT,
-                    STDOUT_PIPE,
-                    STDOUT_SILENCE,
-                    STDERR_PIPE,
-                    STDERR_SILENCE,
-                    STDERR_MERGE,
-                    INHERIT_FDS
-                ]
-            );
-            lua.create_any_userdata(flags)
-        })?,
-    )?;
-    gio_table.set("SubprocessFlags", subprocess_flags)?;
-
     lua.register_userdata_type::<Subprocess>(|reg| {
         reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
             lua.create_string("Subprocess {}")
@@ -236,9 +213,9 @@ fn add_subprocess_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
     subprocess.set(
         "new",
         lua.create_function(
-            |lua, (args, flags): (Vec<String>, LuaUserDataRef<SubprocessFlags>)| {
+            |lua, (args, flags): (Vec<String>, SubprocessFlagsWrapper)| {
                 let proc =
-                    Subprocess::newv(&args.iter().map(OsStr::new).collect::<Vec<_>>(), *flags)
+                    Subprocess::newv(&args.iter().map(OsStr::new).collect::<Vec<_>>(), flags.0)
                         .into_lua_err()?;
 
                 lua.create_any_userdata(proc)
