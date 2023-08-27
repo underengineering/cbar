@@ -151,6 +151,14 @@ local WidgetImpl           = {
     set_halign = function(self, align) end,
 
     ---@param self WidgetImpl
+    ---@param expand boolean
+    set_vexpand = function(self, expand) end,
+
+    ---@param self WidgetImpl
+    ---@param expand boolean
+    set_hexpand = function(self, expand) end,
+
+    ---@param self WidgetImpl
     ---@param width integer
     ---@param height integer
     set_size_request = function(self, width, height) end,
