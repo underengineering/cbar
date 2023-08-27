@@ -75,6 +75,16 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
         Ok(())
     });
 
+    reg.add_method("set_vexpand", |_, this, expand: bool| {
+        this.set_vexpand(expand);
+        Ok(())
+    });
+
+    reg.add_method("set_hexpand", |_, this, expand: bool| {
+        this.set_hexpand(expand);
+        Ok(())
+    });
+
     reg.add_method(
         "set_size_request",
         |_, this, (width, height): (i32, i32)| {
