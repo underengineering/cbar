@@ -1,11 +1,11 @@
-use gtk::{gio::Icon, glib, prelude::*, Application, ApplicationWindow};
+use gtk::{cairo, gio::Icon, glib, prelude::*, Application, ApplicationWindow};
 use mlua::prelude::*;
 use paste::paste;
 
 use super::{
     enums,
     wrappers::{
-        ApplicationFlagsWrapper, EventControllerScrollFlagsWrapper, GStringWrapper,
+        ApplicationFlagsWrapper, ContextWrapper, EventControllerScrollFlagsWrapper, GStringWrapper,
         ModifierTypeWrapper,
     },
 };
@@ -93,6 +93,11 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
         },
     );
 
+    reg.add_method("queue_draw", |_, this, ()| {
+        this.queue_draw();
+        Ok(())
+    });
+
     reg.add_method("allocated_width", |_, this, ()| Ok(this.allocated_width()));
     reg.add_method(
         "allocated_height",
@@ -129,6 +134,45 @@ fn add_enums(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     let align = lua.create_table()?;
     push_enum!(align, gtk, Align, [Fill, Start, End, Center, Baseline]);
     gtk_table.set("Align", align)?;
+
+    let operator = lua.create_table()?;
+    push_enum!(
+        operator,
+        cairo,
+        Operator,
+        [
+            Clear,
+            Source,
+            Over,
+            In,
+            Out,
+            Atop,
+            Dest,
+            DestOver,
+            DestIn,
+            DestOut,
+            DestAtop,
+            Xor,
+            Add,
+            Saturate,
+            Multiply,
+            Screen,
+            Overlay,
+            Darken,
+            Lighten,
+            ColorDodge,
+            ColorBurn,
+            HardLight,
+            SoftLight,
+            Difference,
+            Exclusion,
+            HslHue,
+            HslSaturation,
+            HslColor,
+            HslLuminosity
+        ]
+    );
+    gtk_table.set("Operator", operator)?;
 
     let priority = lua.create_table()?;
     priority.set("HIGH", lua.create_any_userdata(glib::PRIORITY_HIGH)?)?;
@@ -671,6 +715,177 @@ fn add_center_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
+fn add_drawing_area_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+    lua.register_userdata_type::<gtk::cairo::Context>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("Context {}")
+        });
+
+        reg.add_method(
+            "set_source_rgb",
+            |_, this, (red, green, blue): (f64, f64, f64)| {
+                this.set_source_rgb(red, green, blue);
+                Ok(())
+            },
+        );
+
+        reg.add_method(
+            "set_source_rgba",
+            |_, this, (red, green, blue, alpha): (f64, f64, f64, f64)| {
+                this.set_source_rgba(red, green, blue, alpha);
+                Ok(())
+            },
+        );
+
+        reg.add_method("move_to", |_, this, (x, y): (f64, f64)| {
+            this.move_to(x, y);
+            Ok(())
+        });
+
+        reg.add_method("rel_move_to", |_, this, (dx, dy): (f64, f64)| {
+            this.rel_move_to(dx, dy);
+            Ok(())
+        });
+
+        reg.add_method("line_to", |_, this, (x, y): (f64, f64)| {
+            this.line_to(x, y);
+            Ok(())
+        });
+
+        reg.add_method("rel_line_to", |_, this, (dx, dy): (f64, f64)| {
+            this.line_to(dx, dy);
+            Ok(())
+        });
+
+        reg.add_method(
+            "arc",
+            |_, this, (xc, yc, radius, angle1, angle2): (f64, f64, f64, f64, f64)| {
+                this.arc(xc, yc, radius, angle1, angle2);
+                Ok(())
+            },
+        );
+
+        reg.add_method(
+            "arc_negative",
+            |_, this, (xc, yc, radius, angle1, angle2): (f64, f64, f64, f64, f64)| {
+                this.arc_negative(xc, yc, radius, angle1, angle2);
+                Ok(())
+            },
+        );
+
+        reg.add_method(
+            "curve_to",
+            |_, this, (x1, y1, x2, y2, x3, y3): (f64, f64, f64, f64, f64, f64)| {
+                this.curve_to(x1, y1, x2, y2, x3, y3);
+                Ok(())
+            },
+        );
+
+        reg.add_method(
+            "rel_curve_to",
+            |_, this, (dx1, dy1, dx2, dy2, dx3, dy3): (f64, f64, f64, f64, f64, f64)| {
+                this.rel_curve_to(dx1, dy1, dx2, dy2, dx3, dy3);
+                Ok(())
+            },
+        );
+
+        reg.add_method(
+            "rectangle",
+            |_, this, (x, y, width, height): (f64, f64, f64, f64)| {
+                this.rectangle(x, y, width, height);
+                Ok(())
+            },
+        );
+
+        reg.add_method("translate", |_, this, (tx, ty): (f64, f64)| {
+            this.translate(tx, ty);
+            Ok(())
+        });
+
+        reg.add_method("scale", |_, this, (sx, sy): (f64, f64)| {
+            this.scale(sx, sy);
+            Ok(())
+        });
+
+        reg.add_method("rotate", |_, this, angle: f64| {
+            this.rotate(angle);
+            Ok(())
+        });
+
+        reg.add_method("new_path", |_, this, ()| {
+            this.new_path();
+            Ok(())
+        });
+
+        reg.add_method("new_sub_path", |_, this, ()| {
+            this.new_sub_path();
+            Ok(())
+        });
+
+        reg.add_method("close_path", |_, this, ()| {
+            this.close_path();
+            Ok(())
+        });
+
+        reg.add_method("clip", |_, this, ()| {
+            this.clip();
+            Ok(())
+        });
+
+        reg.add_method("paint", |_, this, ()| this.paint().into_lua_err());
+        reg.add_method("paint_with_alpha", |_, this, alpha: f64| {
+            this.paint_with_alpha(alpha).into_lua_err()
+        });
+        reg.add_method("stroke", |_, this, ()| this.stroke().into_lua_err());
+        reg.add_method("fill", |_, this, ()| this.fill().into_lua_err());
+        reg.add_method("save", |_, this, ()| this.save().into_lua_err());
+        reg.add_method("restore", |_, this, ()| this.restore().into_lua_err());
+    })?;
+
+    lua.register_userdata_type::<gtk::DrawingArea>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("DrawingArea {}")
+        });
+
+        reg.add_method("set_content_width", |_, this, width: i32| {
+            this.set_content_width(width);
+            Ok(())
+        });
+
+        reg.add_method("set_content_height", |_, this, height: i32| {
+            this.set_content_height(height);
+            Ok(())
+        });
+
+        reg.add_method("set_draw_func", |_, this, f: LuaOwnedFunction| {
+            this.set_draw_func(move |_, ctx, width, height| {
+                let ctx = ContextWrapper(ctx.clone());
+                f.call::<_, ()>((ctx, width, height)).unwrap();
+            });
+
+            Ok(())
+        });
+
+        reg.add_method("unset_draw_func", |_, this, ()| {
+            this.unset_draw_func();
+            Ok(())
+        });
+
+        add_widget_methods(reg);
+    })?;
+    let drawing_area = lua.create_table()?;
+    drawing_area.set(
+        "new",
+        lua.create_function(|lua, ()| {
+            let drawing_area = gtk::DrawingArea::new();
+            lua.create_any_userdata(drawing_area)
+        })?,
+    )?;
+    gtk_table.set("DrawingArea", drawing_area)?;
+
+    Ok(())
+}
+
 fn add_image_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::Image>(|reg| {
         reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
@@ -1119,6 +1334,7 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     add_box_api(lua, &gtk_table)?;
     add_grid_api(lua, &gtk_table)?;
     add_center_box_api(lua, &gtk_table)?;
+    add_drawing_area_api(lua, &gtk_table)?;
     add_image_api(lua, &gtk_table)?;
     add_revealer_api(lua, &gtk_table)?;
     add_event_controller_api(lua, &gtk_table)?;

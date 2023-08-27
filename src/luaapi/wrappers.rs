@@ -1,4 +1,5 @@
 use gtk::{
+    cairo::Context,
     gdk::ModifierType,
     gio::{ApplicationFlags, SubprocessFlags},
     glib::GString,
@@ -63,6 +64,13 @@ impl<'lua> IntoLua<'lua> for ModifierTypeWrapper {
             _MASK
         );
         Ok(LuaValue::Table(table))
+    }
+}
+
+pub struct ContextWrapper(pub Context);
+impl<'lua> IntoLua<'lua> for ContextWrapper {
+    fn into_lua(self, lua: &'lua Lua) -> LuaResult<LuaValue<'lua>> {
+        Ok(LuaValue::UserData(lua.create_any_userdata(self.0)?))
     }
 }
 

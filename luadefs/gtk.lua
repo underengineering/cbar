@@ -18,6 +18,39 @@ gtk.Align                  = {
     Baseline = 4,
 }
 
+---@enum Operator
+gtk.Operator               = {
+    Clear = 0,
+    Source = 1,
+    Over = 2,
+    In = 3,
+    Out = 4,
+    Atop = 5,
+    Dest = 6,
+    DestOver = 7,
+    DestIn = 8,
+    DestOut = 9,
+    DestAtop = 10,
+    Xor = 11,
+    Add = 12,
+    Saturate = 13,
+    Multiply = 14,
+    Screen = 15,
+    Overlay = 16,
+    Darken = 17,
+    Lighten = 18,
+    ColorDodge = 19,
+    ColorBurn = 20,
+    HardLight = 21,
+    SoftLight = 22,
+    Difference = 23,
+    Exclusion = 24,
+    HslHue = 25,
+    HslSaturation = 26,
+    HslColor = 27,
+    HslLuminosity = 28
+}
+
 ---@class Priority
 local Priority             = {}
 
@@ -162,6 +195,9 @@ local WidgetImpl           = {
     ---@param width integer
     ---@param height integer
     set_size_request = function(self, width, height) end,
+
+    ---@param self WidgetImpl
+    queue_draw = function(self) end,
 
     ---@param self WidgetImpl
     ---@return integer
@@ -393,6 +429,149 @@ gtk.Entry                  = {
     ---@param self Entry
     ---@param max integer
     set_max_length = function(self, max) end
+}
+
+---@class Context
+gtk.Context                = {
+    ---@param self Context
+    ---@param red number
+    ---@param green number
+    ---@param blue number
+    set_source_rgb = function(self, red, green, blue) end,
+
+    ---@param self Context
+    ---@param red number
+    ---@param green number
+    ---@param blue number
+    ---@param alpha number
+    set_source_rgba = function(self, red, green, blue, alpha) end,
+
+    ---@param self Context
+    ---@param x number
+    ---@param y number
+    move_to = function(self, x, y) end,
+
+    ---@param self Context
+    ---@param dx number
+    ---@param dy number
+    rel_move_to = function(self, dx, dy) end,
+
+    ---@param self Context
+    ---@param x number
+    ---@param y number
+    line_to = function(self, x, y) end,
+
+    ---@param self Context
+    ---@param dx number
+    ---@param dy number
+    rel_line_to = function(self, dx, dy) end,
+
+    ---@param self Context
+    ---@param xc number
+    ---@param yc number
+    ---@param radius number
+    ---@param angle1 number
+    ---@param angle2 number
+    arc = function(self, xc, yc, radius, angle1, angle2) end,
+
+    ---@param self Context
+    ---@param xc number
+    ---@param yc number
+    ---@param radius number
+    ---@param angle1 number
+    ---@param angle2 number
+    arc_negative = function(self, xc, yc, radius, angle1, angle2) end,
+
+    ---@param self Context
+    ---@param x1 number
+    ---@param y1 number
+    ---@param x2 number
+    ---@param y2 number
+    ---@param x3 number
+    ---@param y3 number
+    curve_to = function(self, x1, y1, x2, y2, x3, y3) end,
+
+    ---@param self Context
+    ---@param dx1 number
+    ---@param dy1 number
+    ---@param dx2 number
+    ---@param dy2 number
+    ---@param dx3 number
+    ---@param dy3 number
+    rel_curve_to = function(self, dx1, dy1, dx2, dy2, dx3, dy3) end,
+
+    ---@param self Context
+    ---@param x number
+    ---@param y number
+    ---@param width number
+    ---@param height number
+    rectangle = function(self, x, y, width, height) end,
+
+    ---@param self Context
+    ---@param tx number
+    ---@param ty number
+    translate = function(self, tx, ty) end,
+
+    ---@param self Context
+    ---@param sx number
+    ---@param sy number
+    scale = function(self, sx, sy) end,
+
+    ---@param self Context
+    ---@param angle number
+    rotate = function(self, angle) end,
+
+    ---@param self Context
+    new_path = function(self) end,
+
+    ---@param self Context
+    new_sub_path = function(self) end,
+
+    ---@param self Context
+    close_path = function(self) end,
+
+    ---@param self Context
+    clip = function(self) end,
+
+    ---@param self Context
+    paint = function(self) end,
+
+    ---@param self Context
+    ---@param alpha number
+    paint_with_alpha = function(self, alpha) end,
+
+    ---@param self Context
+    stroke = function(self) end,
+
+    ---@param self Context
+    fill = function(self) end,
+
+    ---@param self Context
+    save = function(self) end,
+
+    ---@param self Context
+    restore = function(self) end,
+}
+
+---@class DrawingArea : WidgetImpl
+gtk.DrawingArea            = {
+    ---@return DrawingArea
+    new = function() end,
+
+    ---@param self DrawingArea
+    ---@param width integer
+    set_content_width = function(self, width) end,
+
+    ---@param self DrawingArea
+    ---@param height integer
+    set_content_height = function(self, height) end,
+
+    ---@param self DrawingArea
+    ---@param callback fun(ctx: Context, width: integer, height: integer):nil
+    set_draw_func = function(self, callback) end,
+
+    ---@param self DrawingArea
+    unset_draw_func = function(self) end,
 }
 
 ---@class Image : WidgetImpl
