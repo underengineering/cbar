@@ -78,7 +78,7 @@ local OutputStream = {
     close = function(self) end,
 }
 
----@class SubprocessFlagsCtor
+---@class SubprocessFlags
 ---@field stdin_pipe boolean?
 ---@field stdin_inherit boolean?
 ---@field stdout_pipe boolean?
@@ -88,17 +88,10 @@ local OutputStream = {
 ---@field stderr_merge boolean?
 ---@field inherit_fds boolean?
 
----@class SubprocessFlags
-gio.SubprocessFlags = {
-    ---@param flags SubprocessFlagsCtor
-    ---@return SubprocessFlags
-    new = function(flags) end
-}
-
 ---@class Subprocess
 gio.Subprocess = {
     ---@param args string[]
-    ---@param flags SubprocessFlags
+    ---@param flags SubprocessFlags?
     ---@return Subprocess
     new = function(args, flags) end,
 
