@@ -13,6 +13,18 @@ macro_rules! pack_mask {
 
 pub(crate) use pack_mask;
 
+macro_rules! unpack_mask_postfixed {
+    ($tbl:ident, $mask:expr, $masktyp:ty, [$($value:ident),+], $postfix:ident) => {
+        $(
+            paste! {
+                $tbl.set(stringify!([<$value:lower>]), $mask.contains(<$masktyp>::[<$value $postfix>]))?;
+            }
+        )+
+    };
+}
+
+pub(crate) use unpack_mask_postfixed;
+
 macro_rules! register_signals {
     ($reg: ident, [$($signal:ident),+]) => {
     $(

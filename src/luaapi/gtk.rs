@@ -7,7 +7,10 @@ use gtk::{
 use mlua::prelude::*;
 use paste::paste;
 
-use super::enums;
+use super::{
+    enums,
+    wrappers::{GStringWrapper, ModifierTypeWrapper},
+};
 use crate::utils::{pack_mask, register_signals};
 
 macro_rules! push_enum {
@@ -20,6 +23,22 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
     reg.add_method("upcast", |lua, this, ()| {
         lua.create_any_userdata(this.clone().upcast::<gtk::Widget>())
     });
+
+    reg.add_method(
+        "add_controller",
+        |_, this, controller: LuaUserDataRef<gtk::EventController>| {
+            this.add_controller(controller.clone());
+            Ok(())
+        },
+    );
+
+    reg.add_method(
+        "remove_controller",
+        |_, this, controller: LuaUserDataRef<gtk::EventController>| {
+            this.remove_controller(&*controller);
+            Ok(())
+        },
+    );
 
     reg.add_method("set_visible", |_, this, visible: bool| {
         this.set_visible(visible);
@@ -724,6 +743,170 @@ fn add_revealer_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         })?,
     )?;
     gtk_table.set("Revealer", revealer)?;
+    Ok(())
+}
+
+fn add_event_controller_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+    let event_controller_scroll_flags = lua.create_table()?;
+    event_controller_scroll_flags.set(
+        "new",
+        lua.create_function(|lua, flags_table: LuaTable| {
+            let mut flags = gtk::EventControllerScrollFlags::NONE;
+            pack_mask!(
+                flags_table,
+                flags,
+                gtk::EventControllerScrollFlags,
+                [VERTICAL, HORIZONTAL, DISCRETE, KINETIC, BOTH_AXES]
+            );
+            lua.create_any_userdata(flags)
+        })?,
+    )?;
+    gtk_table.set("EventControllerScrollFlags", event_controller_scroll_flags)?;
+
+    lua.register_userdata_type::<gtk::EventControllerKey>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("EventControllerKey {}")
+        });
+
+        reg.add_method("upcast", |lua, this, ()| {
+            lua.create_any_userdata(this.clone().upcast::<gtk::EventController>())
+        });
+
+        reg.add_method("connect_key_pressed", |_, this, f: LuaOwnedFunction| {
+            this.connect_key_pressed(move |_, key, keycode, state| {
+                let key_name = key.name().map(GStringWrapper);
+                let state = ModifierTypeWrapper(state);
+                let result = f
+                    .call::<_, Option<bool>>((key_name, keycode, state))
+                    .unwrap();
+
+                gtk::Inhibit(result.unwrap_or(false))
+            });
+
+            Ok(())
+        });
+
+        reg.add_method("connect_key_released", |_, this, f: LuaOwnedFunction| {
+            this.connect_key_pressed(move |_, key, keycode, state| {
+                let key_name = key.name().map(GStringWrapper);
+                let state = ModifierTypeWrapper(state);
+                let result = f
+                    .call::<_, Option<bool>>((key_name, keycode, state))
+                    .unwrap();
+
+                gtk::Inhibit(result.unwrap_or(false))
+            });
+
+            Ok(())
+        });
+    })?;
+    let event_controller_key = lua.create_table()?;
+    event_controller_key.set(
+        "new",
+        lua.create_function(|lua, ()| {
+            let event_controller = gtk::EventControllerKey::new();
+            lua.create_any_userdata(event_controller)
+        })?,
+    )?;
+    gtk_table.set("EventControllerKey", event_controller_key)?;
+
+    lua.register_userdata_type::<gtk::EventControllerScroll>(|reg| {
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("EventControllerScroll {}")
+        });
+
+        register_signals!(reg, [scroll_begin, scroll_end]);
+
+        reg.add_method("upcast", |lua, this, ()| {
+            lua.create_any_userdata(this.clone().upcast::<gtk::EventController>())
+        });
+
+        reg.add_method("connect_scroll", |_, this, f: LuaOwnedFunction| {
+            this.connect_scroll(move |_, dx, dy| {
+                let result = f.call::<_, Option<bool>>((dx, dy)).unwrap();
+                gtk::Inhibit(result.unwrap_or(false))
+            });
+
+            Ok(())
+        });
+
+        reg.add_method("connect_decelerate", |_, this, f: LuaOwnedFunction| {
+            this.connect_decelerate(move |_, vel_x, vel_y| {
+                f.call::<_, ()>((vel_x, vel_y)).unwrap();
+            });
+
+            Ok(())
+        });
+    })?;
+    let event_controller_scroll = lua.create_table()?;
+    event_controller_scroll.set(
+        "new",
+        lua.create_function(
+            |lua, flags: LuaUserDataRef<gtk::EventControllerScrollFlags>| {
+                let event_controller = gtk::EventControllerScroll::new(*flags);
+                lua.create_any_userdata(event_controller)
+            },
+        )?,
+    )?;
+    gtk_table.set("EventControllerScroll", event_controller_scroll)?;
+
+    lua.register_userdata_type::<gtk::EventControllerMotion>(|reg| {
+        register_signals!(reg, [leave]);
+
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("EventControllerMotion {}")
+        });
+
+        reg.add_method("upcast", |lua, this, ()| {
+            lua.create_any_userdata(this.clone().upcast::<gtk::EventController>())
+        });
+
+        reg.add_method("connect_enter", |_, this, f: LuaOwnedFunction| {
+            this.connect_enter(move |_, x, y| {
+                f.call::<_, ()>((x, y)).unwrap();
+            });
+
+            Ok(())
+        });
+
+        reg.add_method("connect_motion", |_, this, f: LuaOwnedFunction| {
+            this.connect_motion(move |_, x, y| {
+                f.call::<_, ()>((x, y)).unwrap();
+            });
+
+            Ok(())
+        });
+    })?;
+    let event_controller_motion = lua.create_table()?;
+    event_controller_motion.set(
+        "new",
+        lua.create_function(|lua, ()| {
+            let event_controller = gtk::EventControllerMotion::new();
+            lua.create_any_userdata(event_controller)
+        })?,
+    )?;
+    gtk_table.set("EventControllerMotion", event_controller_motion)?;
+
+    lua.register_userdata_type::<gtk::EventControllerFocus>(|reg| {
+        register_signals!(reg, [enter, leave]);
+
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("EventControllerFocus {}")
+        });
+
+        reg.add_method("upcast", |lua, this, ()| {
+            lua.create_any_userdata(this.clone().upcast::<gtk::EventController>())
+        });
+    })?;
+    let event_controller_focus = lua.create_table()?;
+    event_controller_focus.set(
+        "new",
+        lua.create_function(|lua, ()| {
+            let event_controller = gtk::EventControllerFocus::new();
+            lua.create_any_userdata(event_controller)
+        })?,
+    )?;
+    gtk_table.set("EventControllerFocus", event_controller_focus)?;
 
     Ok(())
 }
@@ -902,6 +1085,7 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     add_center_box_api(lua, &gtk_table)?;
     add_image_api(lua, &gtk_table)?;
     add_revealer_api(lua, &gtk_table)?;
+    add_event_controller_api(lua, &gtk_table)?;
     add_css_provider(lua, &gtk_table)?;
     add_context_api(lua, &gtk_table)?;
     add_layer_shell_api(lua, &gtk_table)?;
