@@ -910,10 +910,27 @@ fn add_context_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     })?;
     let ctx = lua.create_table()?;
     ctx.set(
+        "new",
+        lua.create_function(|lua, ()| {
+            let ctx = glib::MainContext::new();
+            lua.create_any_userdata(ctx)
+        })?,
+    )?;
+    ctx.set(
         "default",
         lua.create_function(|lua, ()| {
             let ctx = glib::MainContext::default();
             lua.create_any_userdata(ctx)
+        })?,
+    )?;
+    ctx.set(
+        "thread_default",
+        lua.create_function(|lua, ()| {
+            Ok(if let Some(ctx) = glib::MainContext::thread_default() {
+                Some(lua.create_any_userdata(ctx)?)
+            } else {
+                None
+            })
         })?,
     )?;
     gtk_table.set("MainContext", ctx)?;

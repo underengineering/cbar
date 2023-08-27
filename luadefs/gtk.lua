@@ -51,7 +51,13 @@ gtk.RevealerTransitionType = {
 ---@class MainContext
 gtk.MainContext            = {
     ---@return MainContext
+    new = function() end,
+
+    ---@return MainContext
     default = function() end,
+
+    ---@return MainContext?
+    thread_default = function() end,
 
     ---@param self MainContext
     ---@param callback fun():nil
