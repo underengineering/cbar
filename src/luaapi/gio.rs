@@ -36,14 +36,14 @@ fn add_async_read_buf_api(lua: &Lua) -> LuaResult<()> {
 
         reg.add_async_method_mut("read", |lua, this, size: usize| async move {
             let mut buffer = vec![0u8; size];
-            this.read(&mut buffer).await.into_lua_err()?;
-            lua.create_string(&buffer)
+            let read = this.read(&mut buffer).await.into_lua_err()?;
+            lua.create_string(&buffer[..read])
         });
 
         reg.add_async_method_mut("read_to_end", |lua, this, size: usize| async move {
             let mut buffer = vec![0u8; size];
-            this.read_to_end(&mut buffer).await.into_lua_err()?;
-            lua.create_string(&buffer)
+            let read = this.read_to_end(&mut buffer).await.into_lua_err()?;
+            lua.create_string(&buffer[..read])
         });
     })?;
 
