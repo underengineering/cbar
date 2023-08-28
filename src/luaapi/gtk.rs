@@ -628,6 +628,19 @@ fn add_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             Ok(())
         });
 
+        reg.add_method("remove_all", |_, this, ()| {
+            let mut child_opt = this.first_child();
+            while let Some(child) = child_opt {
+                this.remove(&child);
+                child_opt = child.next_sibling();
+                if child_opt.is_none() {
+                    break;
+                }
+            }
+
+            Ok(())
+        });
+
         add_widget_methods(reg);
     })?;
     let gbox = lua.create_table()?;
@@ -669,6 +682,14 @@ fn add_grid_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
         reg.add_method("remove", |_, this, child: LuaUserDataRef<gtk::Widget>| {
             this.remove(&*child);
+            Ok(())
+        });
+
+        reg.add_method("remove_all", |_, this, ()| {
+            while let Some(child) = this.first_child() {
+                this.remove(&child);
+            }
+
             Ok(())
         });
 

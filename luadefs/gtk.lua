@@ -249,7 +249,10 @@ gtk.Box                    = {
 
     ---@param self Box
     ---@param widget Widget
-    remove = function(self, widget) end
+    remove = function(self, widget) end,
+
+    ---@param self Box
+    remove_all = function(self) end
 }
 ---@class Grid : WidgetImpl
 gtk.Grid                   = {
@@ -266,7 +269,10 @@ gtk.Grid                   = {
 
     ---@param self Grid
     ---@param widget Widget
-    remove = function(self, widget) end
+    remove = function(self, widget) end,
+
+    ---@param self Grid
+    remove_all = function(self) end
 }
 
 ---@class CenterBox : WidgetImpl
