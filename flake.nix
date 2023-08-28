@@ -146,6 +146,7 @@
         # Packages used by the flake at run-time
         buildInputs = with pkgs; [
           gtk4
+          librsvg
           libpulseaudio
           luajit
         ];
