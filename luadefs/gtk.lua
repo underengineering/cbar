@@ -394,11 +394,13 @@ local EntryBuffer          = {
 
     ---@param self EntryBuffer
     ---@param callback fun(position: integer, n_chars: integer):nil
-    connect_deleted_text = function(self, callback) end,
+    ---@param after boolean?
+    connect_deleted_text = function(self, callback, after) end,
 
     ---@param self EntryBuffer
     ---@param callback fun(position: integer, chars:string, n_chars: integer):nil
-    connect_inserted_text = function(self, callback) end,
+    ---@param after boolean?
+    connect_inserted_text = function(self, callback, after) end,
 
     ---@param self EntryBuffer
     ---@param chars string

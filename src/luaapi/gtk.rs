@@ -505,34 +505,40 @@ fn add_entry_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             lua.create_string("EntryBuffer {}")
         });
 
-        reg.add_method("connect_deleted_text", |_, this, f: LuaOwnedFunction| {
-            this.connect_local("deleted-text", true, move |values| {
-                if let [_, position, n_chars] = values {
-                    let position = position.get::<u32>().unwrap();
-                    let n_chars = n_chars.get::<u32>().unwrap();
-                    f.call::<_, ()>((position, n_chars)).unwrap();
-                }
+        reg.add_method(
+            "connect_deleted_text",
+            |_, this, (f, after): (LuaOwnedFunction, Option<bool>)| {
+                this.connect_local("deleted-text", after.unwrap_or(true), move |values| {
+                    if let [_, position, n_chars] = values {
+                        let position = position.get::<u32>().unwrap();
+                        let n_chars = n_chars.get::<u32>().unwrap();
+                        f.call::<_, ()>((position, n_chars)).unwrap();
+                    }
 
-                None
-            });
+                    None
+                });
 
-            Ok(())
-        });
+                Ok(())
+            },
+        );
 
-        reg.add_method("connect_inserted_text", |_, this, f: LuaOwnedFunction| {
-            this.connect_local("inserted-text", true, move |values| {
-                if let [_, position, chars, n_chars] = values {
-                    let position = position.get::<u32>().unwrap();
-                    let chars = chars.get::<String>().unwrap();
-                    let n_chars = n_chars.get::<u32>().unwrap();
-                    f.call::<_, ()>((position, chars, n_chars)).unwrap();
-                }
+        reg.add_method(
+            "connect_inserted_text",
+            |_, this, (f, after): (LuaOwnedFunction, Option<bool>)| {
+                this.connect_local("inserted-text", after.unwrap_or(true), move |values| {
+                    if let [_, position, chars, n_chars] = values {
+                        let position = position.get::<u32>().unwrap();
+                        let chars = chars.get::<String>().unwrap();
+                        let n_chars = n_chars.get::<u32>().unwrap();
+                        f.call::<_, ()>((position, chars, n_chars)).unwrap();
+                    }
 
-                None
-            });
+                    None
+                });
 
-            Ok(())
-        });
+                Ok(())
+            },
+        );
 
         reg.add_method("text", |lua, this, ()| lua.create_string(this.text()));
 
