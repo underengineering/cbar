@@ -200,6 +200,10 @@ local WidgetImpl           = {
     queue_draw = function(self) end,
 
     ---@param self WidgetImpl
+    ---@return Settings
+    settings = function(self) end,
+
+    ---@param self WidgetImpl
     ---@return integer
     allocated_width = function(self) end,
 
@@ -727,6 +731,41 @@ gtk.EventControllerFocus   = {
     ---@param self EventControllerFocus
     ---@param callback fun():nil
     connect_leave = function(self, callback) end,
+}
+
+---@class Settings
+gtk.Settings               = {
+    ---@param self Settings
+    ---@return string
+    gtk_cursor_theme_name = function(self) end,
+
+    ---@param self Settings
+    ---@param cursor_theme_name string
+    set_gtk_cursor_theme_name = function(self, cursor_theme_name) end,
+
+    ---@param self Settings
+    ---@return integer
+    gtk_cursor_theme_size = function(self) end,
+
+    ---@param self Settings
+    ---@param cursor_theme_size integer
+    set_gtk_cursor_theme_size = function(self, cursor_theme_size) end,
+
+    ---@param self Settings
+    ---@return string
+    gtk_theme_name = function(self) end,
+
+    ---@param self Settings
+    ---@param theme_name string
+    set_gtk_theme_name = function(self, theme_name) end,
+
+    ---@param self Settings
+    ---@return string
+    gtk_icon_theme_name = function(self) end,
+
+    ---@param self Settings
+    ---@param icon_theme_name string
+    set_gtk_icon_theme_name = function(self, icon_theme_name) end,
 }
 
 ---@class CssProvider
