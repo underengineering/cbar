@@ -1,7 +1,7 @@
 {
   inputs = {
     nixpkgs = {
-      url = "github:nixos/nixpkgs/nixos-unstable";
+      url = "github:nixos/nixpkgs/nixpkgs-unstable";
     };
     utils = {
       url = "github:numtide/flake-utils";
@@ -38,7 +38,8 @@
     (
       system: let
         # Imports
-        pkgs = import nixpkgs {
+        pkgs = import nixpkgs {inherit system;};
+        cargoNixPkgs = import nixpkgs {
           inherit system;
           overlays = [
             rust-overlay.overlays.default
@@ -88,7 +89,7 @@
 
         # Create the cargo2nix project
         project =
-          pkgs.callPackage
+          cargoNixPkgs.callPackage
           (generatedCargoNix {
             inherit name;
             src = ./.;
@@ -146,18 +147,18 @@
         # Packages used by the flake at run-time
         buildInputs = with pkgs; [
           gtk4
-          librsvg
           libpulseaudio
+          librsvg
           luajit
         ];
         # Build dependencies
         nativeBuildInputs = with pkgs; [
-          rustc
+          cargoNixPkgs.cargo
+          cargoNixPkgs.rustc
           clang_15
-          mold'
-          cargo
-          pkgconfig
           gtk4-layer-shell.defaultPackage.${system}
+          mold'
+          pkgconfig
         ];
         buildEnvVars = {
           PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
@@ -181,8 +182,7 @@
           pkgs.mkShell
           {
             inherit buildInputs nativeBuildInputs;
-            packages = with pkgs; [rust-analyzer];
-            RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+            RUST_SRC_PATH = "${cargoNixPkgs.rustc}/lib/rustlib/src/rust/library";
           }
           // buildEnvVars;
       }
