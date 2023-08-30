@@ -618,6 +618,9 @@ gtk.Image                  = {
     ---@param self Image
     ---@param icon Icon
     set_from_gicon = function(self, icon) end,
+
+    ---@param self Image
+    clear = function() end
 }
 
 ---@class Revealer : WidgetImpl

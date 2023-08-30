@@ -953,6 +953,11 @@ fn add_image_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             Ok(())
         });
 
+        reg.add_method("clear", |_, this, ()| {
+            this.clear();
+            Ok(())
+        });
+
         add_widget_methods(reg);
     })?;
     let image = lua.create_table()?;
