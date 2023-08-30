@@ -12,7 +12,7 @@ use mlua::prelude::*;
 use paste::paste;
 use std::{ffi::OsStr, path::Path};
 
-use crate::utils::register_signals;
+use crate::utils::{catch_lua_errors, register_signals};
 
 use super::wrappers::SubprocessFlagsWrapper;
 

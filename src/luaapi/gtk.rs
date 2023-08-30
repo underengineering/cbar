@@ -9,7 +9,7 @@ use super::{
         ModifierTypeWrapper,
     },
 };
-use crate::utils::register_signals;
+use crate::utils::{catch_lua_errors, catch_lua_errors_async, register_signals};
 
 macro_rules! push_enum {
     ($tbl:ident, $ns:ident, $name:ident, [$($variant:ident),+]) => {
@@ -506,7 +506,7 @@ fn add_entry_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
                     if let [_, position, n_chars] = values {
                         let position = position.get::<u32>().unwrap();
                         let n_chars = n_chars.get::<u32>().unwrap();
-                        f.call::<_, ()>((position, n_chars)).unwrap();
+                        catch_lua_errors::<_, ()>(f.to_ref(), (position, n_chars));
                     }
 
                     None
@@ -524,7 +524,7 @@ fn add_entry_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
                         let position = position.get::<u32>().unwrap();
                         let chars = chars.get::<String>().unwrap();
                         let n_chars = n_chars.get::<u32>().unwrap();
-                        f.call::<_, ()>((position, chars, n_chars)).unwrap();
+                        catch_lua_errors::<_, ()>(f.to_ref(), (position, chars, n_chars));
                     }
 
                     None
@@ -892,7 +892,7 @@ fn add_drawing_area_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         reg.add_method("set_draw_func", |_, this, f: LuaOwnedFunction| {
             this.set_draw_func(move |_, ctx, width, height| {
                 let ctx = ContextWrapper(ctx.clone());
-                f.call::<_, ()>((ctx, width, height)).unwrap();
+                catch_lua_errors::<_, ()>(f.to_ref(), (ctx, width, height));
             });
 
             Ok(())
@@ -1095,7 +1095,8 @@ fn add_event_controller_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
         reg.add_method("connect_scroll", |_, this, f: LuaOwnedFunction| {
             this.connect_scroll(move |_, dx, dy| {
-                let result = f.call::<_, Option<bool>>((dx, dy)).unwrap();
+                let result =
+                    catch_lua_errors::<_, Option<bool>>(f.to_ref(), (dx, dy)).unwrap_or(None);
                 gtk::Inhibit(result.unwrap_or(false))
             });
 
@@ -1104,7 +1105,7 @@ fn add_event_controller_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
         reg.add_method("connect_decelerate", |_, this, f: LuaOwnedFunction| {
             this.connect_decelerate(move |_, vel_x, vel_y| {
-                f.call::<_, ()>((vel_x, vel_y)).unwrap();
+                catch_lua_errors::<_, ()>(f.to_ref(), (vel_x, vel_y));
             });
 
             Ok(())
@@ -1133,7 +1134,7 @@ fn add_event_controller_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
         reg.add_method("connect_enter", |_, this, f: LuaOwnedFunction| {
             this.connect_enter(move |_, x, y| {
-                f.call::<_, ()>((x, y)).unwrap();
+                catch_lua_errors::<_, ()>(f.to_ref(), (x, y));
             });
 
             Ok(())
@@ -1141,7 +1142,7 @@ fn add_event_controller_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
         reg.add_method("connect_motion", |_, this, f: LuaOwnedFunction| {
             this.connect_motion(move |_, x, y| {
-                f.call::<_, ()>((x, y)).unwrap();
+                catch_lua_errors::<_, ()>(f.to_ref(), (x, y));
             });
 
             Ok(())
@@ -1275,7 +1276,9 @@ fn add_context_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         });
 
         reg.add_method("spawn_local", |_, this, f: LuaOwnedFunction| {
-            this.spawn_local(async move { f.call_async::<_, ()>(()).await.unwrap() });
+            this.spawn_local(async move {
+                catch_lua_errors_async::<_, ()>(f.to_ref(), ()).await;
+            });
             Ok(())
         });
 
@@ -1283,7 +1286,7 @@ fn add_context_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             "spawn_local_with_priority",
             |_, this, (priority, f): (LuaUserDataRef<glib::Priority>, LuaOwnedFunction)| {
                 this.spawn_local_with_priority(*priority, async move {
-                    f.call_async::<_, ()>(()).await.unwrap()
+                    catch_lua_errors_async::<_, ()>(f.to_ref(), ()).await;
                 });
                 Ok(())
             },

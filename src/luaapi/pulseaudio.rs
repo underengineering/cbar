@@ -1,6 +1,8 @@
 use gtk::glib::MainContext;
 use mlua::{prelude::*, IntoLua};
 
+use crate::utils::catch_lua_errors;
+
 use super::wrappers::InterestMaskSetWrapper;
 
 macro_rules! push_enum {
@@ -161,7 +163,7 @@ fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
 
         reg.add_method_mut("set_state_callback", |_, this, f: LuaOwnedFunction| {
             this.set_state_callback(Some(Box::new(move || {
-                f.call::<_, ()>(()).unwrap();
+                catch_lua_errors::<_, ()>(f.to_ref(), ());
             })));
 
             Ok(())
@@ -176,7 +178,7 @@ fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
             "subscribe",
             |_, this, (mask, f): (InterestMaskSetWrapper, LuaOwnedFunction)| {
                 this.subscribe(mask.0, move |success| {
-                    f.call::<_, ()>(success).unwrap();
+                    catch_lua_errors::<_, ()>(f.to_ref(), success);
                 });
 
                 Ok(())
@@ -187,7 +189,7 @@ fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
             this.set_subscribe_callback(Some(Box::new(move |facility, operation, index| {
                 let facility = facility.map(|value| value as i32);
                 let operation = operation.map(|value| value as i32);
-                f.call::<_, ()>((facility, operation, index)).unwrap();
+                catch_lua_errors::<_, ()>(f.to_ref(), (facility, operation, index));
             })));
 
             Ok(())
@@ -195,7 +197,7 @@ fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
 
         reg.add_method("get_server_info", |_, this, f: LuaOwnedFunction| {
             this.introspect().get_server_info(move |result| {
-                f.call::<_, ()>(ServerInfoWrapper(result)).unwrap();
+                catch_lua_errors::<_, ()>(f.to_ref(), ServerInfoWrapper(result));
             });
 
             Ok(())
@@ -207,7 +209,7 @@ fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
                 this.introspect()
                     .get_sink_info_by_index(index as u32, move |result| {
                         if let pulse::callbacks::ListResult::Item(item) = result {
-                            f.call::<_, ()>(SinkInfoWrapper(item)).unwrap();
+                            catch_lua_errors::<_, ()>(f.to_ref(), SinkInfoWrapper(item));
                         }
                     });
 
@@ -221,7 +223,7 @@ fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
                 this.introspect()
                     .get_sink_info_by_name(&name, move |result| {
                         if let pulse::callbacks::ListResult::Item(item) = result {
-                            f.call::<_, ()>(SinkInfoWrapper(item)).unwrap();
+                            catch_lua_errors::<_, ()>(f.to_ref(), SinkInfoWrapper(item));
                         }
                     });
 

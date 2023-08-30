@@ -1,4 +1,4 @@
-use mlua::Lua;
+use mlua::{prelude::*, Lua};
 
 macro_rules! pack_mask {
     ($tbl:ident, $mask:ident, $masktyp:ty, [$($value:ident),+]) => {
@@ -33,7 +33,7 @@ macro_rules! register_signals {
         paste! {
             $reg.add_method(stringify!([<connect_ $signal>]), |_, this, f: LuaOwnedFunction| {
                 this.[<connect_ $signal>](move |_| {
-                    f.call::<_, ()>(()).unwrap();
+                    catch_lua_errors::<_, ()>(f.to_ref(), ());
                 });
                 Ok(())
             });
@@ -43,6 +43,8 @@ macro_rules! register_signals {
 }
 
 pub(crate) use register_signals;
+
+use crate::error::LuaErrorWrapper;
 
 pub trait LuaExt {
     unsafe fn new_with_stock_allocator() -> Lua {
@@ -61,3 +63,31 @@ pub trait LuaExt {
 }
 
 impl LuaExt for Lua {}
+
+pub fn catch_lua_errors<'lua, A, R>(f: LuaFunction<'lua>, args: A) -> Option<R>
+where
+    A: IntoLuaMulti<'lua>,
+    R: FromLuaMulti<'lua>,
+{
+    match f.call::<A, R>(args) {
+        Ok(value) => Some(value),
+        Err(err) => {
+            eprintln!("Uncaught lua callback error:\n{}", LuaErrorWrapper(err));
+            None
+        }
+    }
+}
+
+pub async fn catch_lua_errors_async<'lua, A, R>(f: LuaFunction<'lua>, args: A) -> Option<R>
+where
+    A: IntoLuaMulti<'lua>,
+    R: FromLuaMulti<'lua> + 'lua,
+{
+    match f.call_async::<A, R>(args).await {
+        Ok(value) => Some(value),
+        Err(err) => {
+            eprintln!("Uncaught lua callback error:\n{}", LuaErrorWrapper(err));
+            None
+        }
+    }
+}
