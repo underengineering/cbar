@@ -1,3 +1,5 @@
+use mlua::Lua;
+
 macro_rules! pack_mask {
     ($tbl:ident, $mask:ident, $masktyp:ty, [$($value:ident),+]) => {
         $(
@@ -41,3 +43,21 @@ macro_rules! register_signals {
 }
 
 pub(crate) use register_signals;
+
+pub trait LuaExt {
+    unsafe fn new_with_stock_allocator() -> Lua {
+        let state = mlua_sys::luaL_newstate();
+
+        mlua_sys::luaL_requiref(
+            state,
+            "_G" as *const str as *const i8,
+            mlua_sys::luaopen_base,
+            1,
+        );
+        mlua_sys::lua_pop(state, 1);
+
+        Lua::init_from_ptr(state)
+    }
+}
+
+impl LuaExt for Lua {}

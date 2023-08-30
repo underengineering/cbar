@@ -1,6 +1,7 @@
 use clap::Parser;
 use mlua::prelude::*;
 use std::{env, fs, path::PathBuf};
+use utils::LuaExt;
 
 mod error;
 mod hyprland;
@@ -53,7 +54,7 @@ fn main() -> Result<(), Error> {
         return Err(Error::ConfigFileNotAFile);
     }
 
-    let lua = unsafe { Lua::unsafe_new() };
+    let lua = unsafe { Lua::new_with_stock_allocator() };
     lua.load_from_std_lib(LuaStdLib::ALL)?;
 
     let globals = lua.globals();
