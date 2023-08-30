@@ -1,10 +1,4 @@
-use gtk::{
-    cairo,
-    gio::Icon,
-    glib::{self, GString},
-    prelude::*,
-    Application, ApplicationWindow,
-};
+use gtk::{cairo, gio::Icon, glib, prelude::*, Application, ApplicationWindow};
 use mlua::prelude::*;
 use paste::paste;
 
@@ -1187,7 +1181,7 @@ fn add_event_controller_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
-fn add_settings_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+fn add_settings_api(lua: &Lua) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::Settings>(|reg| {
         reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
             lua.create_string("Settings {}")
@@ -1439,7 +1433,7 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     add_image_api(lua, &gtk_table)?;
     add_revealer_api(lua, &gtk_table)?;
     add_event_controller_api(lua, &gtk_table)?;
-    add_settings_api(lua, &gtk_table)?;
+    add_settings_api(lua)?;
     add_css_provider(lua, &gtk_table)?;
     add_context_api(lua, &gtk_table)?;
     add_layer_shell_api(lua, &gtk_table)?;
