@@ -45,7 +45,7 @@ worker.Worker = {
     start = function(code, name) end,
 
     -- Returns whether worker has terminated
-    ---@param self
+    ---@param self Worker
     ---@return boolean
     dead = function(self) end,
 

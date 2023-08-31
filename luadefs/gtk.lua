@@ -620,7 +620,7 @@ gtk.Image                  = {
     set_from_gicon = function(self, icon) end,
 
     ---@param self Image
-    clear = function() end
+    clear = function(self) end
 }
 
 ---@class Revealer : WidgetImpl
