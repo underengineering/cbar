@@ -10,7 +10,7 @@ use paste::paste;
 use pulse::context::subscribe::InterestMaskSet;
 use sysinfo::{CpuRefreshKind, ProcessRefreshKind, RefreshKind};
 
-use crate::utils::{pack_mask, unpack_mask_postfixed};
+use crate::macros::{pack_mask, unpack_mask_postfixed};
 
 macro_rules! bitmask_from_lua_impl {
     ($typ:ty, $default:expr, [$($value:ident),+]) => {

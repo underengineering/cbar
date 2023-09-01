@@ -9,7 +9,8 @@ use super::{
         ModifierTypeWrapper,
     },
 };
-use crate::utils::{catch_lua_errors, catch_lua_errors_async, register_signals};
+use crate::macros::register_signals;
+use crate::utils::{catch_lua_errors, catch_lua_errors_async};
 
 macro_rules! push_enum {
     ($tbl:ident, $ns:ident, $name:ident, [$($variant:ident),+]) => {

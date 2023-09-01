@@ -6,6 +6,7 @@ use utils::LuaExt;
 mod error;
 mod hyprland;
 mod luaapi;
+mod macros;
 mod system_info;
 mod utils;
 
