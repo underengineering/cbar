@@ -848,3 +848,7 @@ function gtk.layer_shell.set_anchor(window, edge, anchor_to_edge) end
 ---@param window ApplicationWindow
 ---@param mode KeyboardMode
 function gtk.layer_shell.set_keyboard_mode(window, mode) end
+
+---@param window ApplicationWindow
+---@param namespace string
+function gtk.layer_shell.set_namespace(window, namespace) end

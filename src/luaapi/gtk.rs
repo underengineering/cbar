@@ -1411,6 +1411,15 @@ fn add_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             },
         )?,
     )?;
+    layer_shell.set(
+        "set_namespace",
+        lua.create_function(
+            |_, (window, namespace): (LuaUserDataRef<ApplicationWindow>, String)| {
+                gtk4_layer_shell::set_namespace(&*window, &namespace);
+                Ok(())
+            },
+        )?,
+    )?;
 
     gtk_table.set("layer_shell", layer_shell)?;
 
