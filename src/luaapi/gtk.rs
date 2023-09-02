@@ -99,6 +99,8 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
         Ok(())
     });
 
+    reg.add_method("grab_focus", |_, this, ()| Ok(this.grab_focus()));
+
     reg.add_method("settings", |lua, this, ()| {
         let settings = this.settings();
         lua.create_any_userdata(settings)

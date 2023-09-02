@@ -208,6 +208,9 @@ local WidgetImpl           = {
     queue_draw = function(self) end,
 
     ---@param self WidgetImpl
+    grab_focus = function(self) end,
+
+    ---@param self WidgetImpl
     ---@return Settings
     settings = function(self) end,
 
