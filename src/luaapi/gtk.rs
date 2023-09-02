@@ -1036,6 +1036,103 @@ fn add_image_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
+// TODO: add_mark
+fn add_scale_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+    lua.register_userdata_type::<gtk::Scale>(|reg| {
+        register_signals!(reg, [value_changed]);
+
+        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
+            lua.create_string("Scale {}")
+        });
+
+        reg.add_method("connect_adjust_bounds", |_, this, f: LuaOwnedFunction| {
+            this.connect_adjust_bounds(move |_, value| {
+                catch_lua_errors::<_, ()>(f.to_ref(), value);
+            });
+            Ok(())
+        });
+
+        reg.add_method("set_value", |_, this, value: f64| {
+            this.set_value(value);
+            Ok(())
+        });
+
+        reg.add_method("value", |_, this, ()| Ok(this.value()));
+
+        reg.add_method("set_range", |_, this, (min, max): (f64, f64)| {
+            this.set_range(min, max);
+            Ok(())
+        });
+
+        reg.add_method("set_inverted", |_, this, setting: bool| {
+            this.set_inverted(setting);
+            Ok(())
+        });
+
+        reg.add_method("is_inverted", |_, this, ()| Ok(this.is_inverted()));
+
+        reg.add_method("round_digits", |_, this, ()| Ok(this.round_digits()));
+
+        reg.add_method("set_round_digits", |_, this, round_digits: i32| {
+            this.set_round_digits(round_digits);
+            Ok(())
+        });
+
+        reg.add_method("digits", |_, this, ()| Ok(this.digits()));
+
+        reg.add_method("set_digits", |_, this, digits: i32| {
+            this.set_digits(digits);
+            Ok(())
+        });
+
+        reg.add_method("draws_value", |_, this, ()| Ok(this.draws_value()));
+
+        reg.add_method("set_draw_value", |_, this, draw_value: bool| {
+            this.set_draw_value(draw_value);
+            Ok(())
+        });
+
+        reg.add_method("set_increments", |_, this, (step, page): (f64, f64)| {
+            this.set_increments(step, page);
+            Ok(())
+        });
+
+        reg.add_method("set_fill_level", |_, this, fill_level: f64| {
+            this.set_fill_level(fill_level);
+            Ok(())
+        });
+
+        reg.add_method("fill_level", |_, this, ()| Ok(this.fill_level()));
+
+        reg.add_method(
+            "set_restrict_to_fill_level",
+            |_, this, restrict_to_fill_level| {
+                this.set_restrict_to_fill_level(restrict_to_fill_level);
+                Ok(())
+            },
+        );
+
+        reg.add_method("restricts_to_fill_level", |_, this, ()| {
+            Ok(this.restricts_to_fill_level())
+        });
+
+        add_widget_methods(reg);
+    })?;
+    let scale = lua.create_table()?;
+    scale.set(
+        "with_range",
+        lua.create_function(
+            |lua, (orientation, min, max, step): (enums::Orientation, f64, f64, Option<f64>)| {
+                let scale = gtk::Scale::with_range(orientation.0, min, max, step.unwrap_or(1.0));
+                lua.create_any_userdata(scale)
+            },
+        )?,
+    )?;
+    gtk_table.set("Scale", scale)?;
+
+    Ok(())
+}
+
 fn add_revealer_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     lua.register_userdata_type::<gtk::Revealer>(|reg| {
         reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
@@ -1495,6 +1592,7 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
     add_center_box_api(lua, &gtk_table)?;
     add_drawing_area_api(lua, &gtk_table)?;
     add_image_api(lua, &gtk_table)?;
+    add_scale_api(lua, &gtk_table)?;
     add_revealer_api(lua, &gtk_table)?;
     add_event_controller_api(lua, &gtk_table)?;
     add_settings_api(lua)?;

@@ -657,6 +657,90 @@ gtk.Image                  = {
     clear = function(self) end
 }
 
+---@class Scale : WidgetImpl
+gtk.Scale                  = {
+    ---@param orientation Orientation
+    ---@param min number
+    ---@param max number
+    ---@param step number? 1.0 by default
+    ---@return Scale
+    with_range = function(orientation, min, max, step) end,
+
+    ---@param self Scale
+    ---@param callback fun():nil
+    connect_value_changed = function(self, callback) end,
+
+    ---@param self Scale
+    ---@param callback fun(value: number):nil
+    connect_adjust_bounds = function(self, callback) end,
+
+    ---@param self Scale
+    ---@param value number
+    set_value = function(self, value) end,
+
+    ---@param self Scale
+    ---@return number
+    value = function(self) end,
+
+    ---@param self Scale
+    ---@param min number
+    ---@param max number
+    set_range = function(self, min, max) end,
+
+    ---@param self Scale
+    ---@param setting boolean
+    set_inverted = function(self, setting) end,
+
+    ---@param self Scale
+    ---@return boolean
+    is_inverted = function(self) end,
+
+    ---@param self Scale
+    ---@return integer
+    round_digits = function(self) end,
+
+    ---@param self Scale
+    ---@param round_digits integer
+    set_round_digits = function(self, round_digits) end,
+
+    ---@param self Scale
+    ---@return integer
+    digits = function(self) end,
+
+    ---@param self Scale
+    ---@param digits integer
+    set_digits = function(self, digits) end,
+
+    ---@param self Scale
+    ---@return boolean
+    draws_value = function(self) end,
+
+    ---@param self Scale
+    ---@param draw_value boolean
+    set_draw_value = function(self, draw_value) end,
+
+    ---@param self Scale
+    ---@param step number
+    ---@param page number
+    set_increments = function(self, step, page) end,
+
+    ---@param self Scale
+    ---@param fill_level number
+    set_fill_level = function(self, fill_level) end,
+
+    ---@param self Scale
+    ---@return number
+    fill_level = function(self) end,
+
+    ---@param self Scale
+    ---@param restrict_to_fill_level boolean
+    set_restrict_to_fill_level = function(self, restrict_to_fill_level) end,
+
+    ---@param self Scale
+    ---@return boolean
+    restricts_to_fill_level = function(self) end,
+}
+
 ---@class Revealer : WidgetImpl
 gtk.Revealer               = {
     ---@return Revealer
