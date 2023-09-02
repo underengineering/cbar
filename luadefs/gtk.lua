@@ -18,6 +18,14 @@ gtk.Align                  = {
     Baseline = 4,
 }
 
+---@enum EllipsizeMode
+gtk.EllipsizeMode          = {
+    None = 0,
+    Start = 1,
+    Middle = 2,
+    End = 3
+}
+
 ---@enum Operator
 gtk.Operator               = {
     Clear = 0,
@@ -389,7 +397,11 @@ gtk.Label                  = {
 
     ---@param self Label
     ---@param markup string
-    set_markup = function(self, markup) end
+    set_markup = function(self, markup) end,
+
+    ---@param self Label
+    ---@param mode EllipsizeMode
+    set_ellipsize = function(self, mode) end
 }
 
 ---@class EntryBuffer
