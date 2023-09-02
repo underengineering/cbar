@@ -440,7 +440,10 @@ gtk.Entry                  = {
 
     ---@param self Entry
     ---@param max integer
-    set_max_length = function(self, max) end
+    set_max_length = function(self, max) end,
+
+    ---@param self Entry
+    grab_focus_without_selecting = function(self) end,
 }
 
 ---@class Context
@@ -687,6 +690,9 @@ gtk.EventControllerKey     = {
     ---@param self EventControllerKey
     ---@param callback fun(key_name: string, keycode: integer, modifier_type: ModifierType):boolean?
     connect_key_released = function(self, callback) end,
+
+    ---@param self EventControllerKey
+    forward = function(self) end
 }
 
 ---@class EventControllerScroll : EventControllerImpl
