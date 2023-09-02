@@ -274,8 +274,8 @@ gtk.Grid                   = {
     ---@param widget Widget
     ---@param column integer
     ---@param row integer
-    ---@param width integer
-    ---@param height integer
+    ---@param width integer?
+    ---@param height integer?
     attach = function(self, widget, column, row, width, height) end,
 
     ---@param self Grid

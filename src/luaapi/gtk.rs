@@ -688,10 +688,16 @@ fn add_grid_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
                 LuaUserDataRef<gtk::Widget>,
                 i32,
                 i32,
-                i32,
-                i32,
+                Option<i32>,
+                Option<i32>,
             )| {
-                this.attach(&*child, column, row, width, height);
+                this.attach(
+                    &*child,
+                    column,
+                    row,
+                    width.unwrap_or(1),
+                    height.unwrap_or(1),
+                );
                 Ok(())
             },
         );
