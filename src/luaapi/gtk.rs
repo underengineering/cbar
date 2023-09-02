@@ -1064,6 +1064,10 @@ fn add_event_controller_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             lua.create_any_userdata(this.clone().upcast::<gtk::EventController>())
         });
 
+        reg.add_method("forward", |_, this, widget: LuaUserDataRef<gtk::Widget>| {
+            Ok(this.forward(&*widget))
+        });
+
         reg.add_method("connect_key_pressed", |_, this, f: LuaOwnedFunction| {
             this.connect_key_pressed(move |_, key, keycode, state| {
                 let key_name = key.name().map(GStringWrapper);
