@@ -283,7 +283,23 @@ gtk.Grid                   = {
     remove = function(self, widget) end,
 
     ---@param self Grid
-    remove_all = function(self) end
+    remove_all = function(self) end,
+
+    ---@param self Grid
+    ---@param spacing integer
+    set_column_spacing = function(self, spacing) end,
+
+    ---@param self Grid
+    ---@param homogeneous boolean
+    set_column_homogeneous = function(self, homogeneous) end,
+
+    ---@param self Grid
+    ---@param spacing integer
+    set_row_spacing = function(self, spacing) end,
+
+    ---@param self Grid
+    ---@param homogeneous boolean
+    set_row_homogeneous = function(self, homogeneous) end
 }
 
 ---@class CenterBox : WidgetImpl

@@ -715,6 +715,26 @@ fn add_grid_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             Ok(())
         });
 
+        reg.add_method("set_column_spacing", |_, this, spacing: u32| {
+            this.set_column_spacing(spacing);
+            Ok(())
+        });
+
+        reg.add_method("set_column_homogeneous", |_, this, homogeneous: bool| {
+            this.set_column_homogeneous(homogeneous);
+            Ok(())
+        });
+
+        reg.add_method("set_row_spacing", |_, this, spacing: u32| {
+            this.set_row_spacing(spacing);
+            Ok(())
+        });
+
+        reg.add_method("set_row_homogeneous", |_, this, homogeneous: bool| {
+            this.set_row_homogeneous(homogeneous);
+            Ok(())
+        });
+
         add_widget_methods(reg);
     })?;
     let grid = lua.create_table()?;
