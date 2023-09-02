@@ -588,6 +588,11 @@ fn add_entry_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             Ok(())
         });
 
+        reg.add_method("grab_focus_without_selecting", |_, this, ()| {
+            this.grab_focus_without_selecting();
+            Ok(())
+        });
+
         add_widget_methods(reg);
     })?;
     let entry = lua.create_table()?;
