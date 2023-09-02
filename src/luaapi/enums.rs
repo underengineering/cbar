@@ -60,6 +60,35 @@ impl Into<i32> for Orientation {
 
 impl_lua!(Orientation);
 
+pub(super) struct EllipsizeMode(pub(super) gtk::pango::EllipsizeMode);
+impl std::convert::TryFrom<i32> for EllipsizeMode {
+    type Error = Error;
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self(gtk::pango::EllipsizeMode::None)),
+            1 => Ok(Self(gtk::pango::EllipsizeMode::Start)),
+            2 => Ok(Self(gtk::pango::EllipsizeMode::Middle)),
+            3 => Ok(Self(gtk::pango::EllipsizeMode::End)),
+            _ => Err(Error::ConversionFailed),
+        }
+    }
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<i32> for EllipsizeMode {
+    fn into(self) -> i32 {
+        match self.0 {
+            gtk::pango::EllipsizeMode::None => 0,
+            gtk::pango::EllipsizeMode::Start => 1,
+            gtk::pango::EllipsizeMode::Middle => 2,
+            gtk::pango::EllipsizeMode::End => 3,
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl_lua!(EllipsizeMode);
+
 pub(super) struct Operator(pub(super) gtk::cairo::Operator);
 impl std::convert::TryFrom<i32> for Operator {
     type Error = Error;

@@ -1,4 +1,4 @@
-use gtk::{cairo, gio::Icon, glib, prelude::*, Application, ApplicationWindow};
+use gtk::{cairo, gio::Icon, glib, pango, prelude::*, Application, ApplicationWindow};
 use mlua::prelude::*;
 use paste::paste;
 
@@ -140,6 +140,15 @@ fn add_enums(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     let align = lua.create_table()?;
     push_enum!(align, gtk, Align, [Fill, Start, End, Center, Baseline]);
     gtk_table.set("Align", align)?;
+
+    let ellipsize_mode = lua.create_table()?;
+    push_enum!(
+        ellipsize_mode,
+        pango,
+        EllipsizeMode,
+        [None, Start, Middle, End]
+    );
+    gtk_table.set("EllipsizeMode", ellipsize_mode)?;
 
     let operator = lua.create_table()?;
     push_enum!(
@@ -476,6 +485,11 @@ fn add_label_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
         reg.add_method("set_markup", |_, this, markup: String| {
             this.set_markup(&markup);
+            Ok(())
+        });
+
+        reg.add_method("set_ellipsize", |_, this, mode: enums::EllipsizeMode| {
+            this.set_ellipsize(mode.0);
             Ok(())
         });
 
