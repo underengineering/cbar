@@ -477,42 +477,42 @@ gtk.Entry                  = {
     grab_focus_without_selecting = function(self) end,
 }
 
----@class Context
-gtk.Context                = {
-    ---@param self Context
+---@class CairoContext
+gtk.CairoContext           = {
+    ---@param self CairoContext
     ---@param red number
     ---@param green number
     ---@param blue number
     set_source_rgb = function(self, red, green, blue) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     ---@param red number
     ---@param green number
     ---@param blue number
     ---@param alpha number
     set_source_rgba = function(self, red, green, blue, alpha) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     ---@param x number
     ---@param y number
     move_to = function(self, x, y) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     ---@param dx number
     ---@param dy number
     rel_move_to = function(self, dx, dy) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     ---@param x number
     ---@param y number
     line_to = function(self, x, y) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     ---@param dx number
     ---@param dy number
     rel_line_to = function(self, dx, dy) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     ---@param xc number
     ---@param yc number
     ---@param radius number
@@ -520,7 +520,7 @@ gtk.Context                = {
     ---@param angle2 number
     arc = function(self, xc, yc, radius, angle1, angle2) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     ---@param xc number
     ---@param yc number
     ---@param radius number
@@ -528,7 +528,7 @@ gtk.Context                = {
     ---@param angle2 number
     arc_negative = function(self, xc, yc, radius, angle1, angle2) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     ---@param x1 number
     ---@param y1 number
     ---@param x2 number
@@ -537,7 +537,7 @@ gtk.Context                = {
     ---@param y3 number
     curve_to = function(self, x1, y1, x2, y2, x3, y3) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     ---@param dx1 number
     ---@param dy1 number
     ---@param dx2 number
@@ -546,56 +546,56 @@ gtk.Context                = {
     ---@param dy3 number
     rel_curve_to = function(self, dx1, dy1, dx2, dy2, dx3, dy3) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     ---@param x number
     ---@param y number
     ---@param width number
     ---@param height number
     rectangle = function(self, x, y, width, height) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     ---@param tx number
     ---@param ty number
     translate = function(self, tx, ty) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     ---@param sx number
     ---@param sy number
     scale = function(self, sx, sy) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     ---@param angle number
     rotate = function(self, angle) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     new_path = function(self) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     new_sub_path = function(self) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     close_path = function(self) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     clip = function(self) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     paint = function(self) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     ---@param alpha number
     paint_with_alpha = function(self, alpha) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     stroke = function(self) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     fill = function(self) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     save = function(self) end,
 
-    ---@param self Context
+    ---@param self CairoContext
     restore = function(self) end,
 }
 
@@ -613,7 +613,7 @@ gtk.DrawingArea            = {
     set_content_height = function(self, height) end,
 
     ---@param self DrawingArea
-    ---@param callback fun(ctx: Context, width: integer, height: integer):nil
+    ---@param callback fun(ctx: CairoContext, width: integer, height: integer):nil
     set_draw_func = function(self, callback) end,
 
     ---@param self DrawingArea
