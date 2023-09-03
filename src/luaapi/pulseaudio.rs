@@ -121,13 +121,8 @@ fn add_mainloop_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
     let mainloop = lua.create_table()?;
     mainloop.set(
         "new",
-        lua.create_function(|lua, ctx: Option<LuaUserDataRefMut<MainContext>>| {
-            let mainloop = if let Some(mut udref) = ctx {
-                pulse_glib::Mainloop::new(Some(&mut *udref))
-            } else {
-                pulse_glib::Mainloop::new(None)
-            };
-
+        lua.create_function(|lua, mut ctx: Option<LuaUserDataRefMut<MainContext>>| {
+            let mainloop = pulse_glib::Mainloop::new(ctx.as_deref_mut());
             if let Some(mainloop) = mainloop {
                 Ok(Some(lua.create_any_userdata(mainloop)?))
             } else {
