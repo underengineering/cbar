@@ -6,7 +6,7 @@ gio = {}
 ---@class InputStreamAsyncBufRead
 local InputStreamAsyncBufRead = {
     ---@param self InputStreamAsyncBufRead
-    ---@param capacity integer?
+    ---@param capacity? integer
     ---@return string
     read_line = function(self, capacity) end,
 
@@ -91,13 +91,13 @@ local OutputStream = {
 ---@class Subprocess
 gio.Subprocess = {
     ---@param args string[]
-    ---@param flags SubprocessFlags?
+    ---@param flags? SubprocessFlags
     ---@return Subprocess
     new = function(args, flags) end,
 
     ---@async
     ---@param self Subprocess
-    ---@param data string?
+    ---@param data? string
     ---@return string?
     ---@return string?
     communicate_raw = function(self, data) end,

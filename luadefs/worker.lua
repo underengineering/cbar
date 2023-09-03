@@ -40,7 +40,7 @@ local WorkerReceiver = {
 ---@class Worker
 worker.Worker = {
     ---@param code string Code to be passed to the created lua vm
-    ---@param name string? Compiled chunk name
+    ---@param name? string Compiled chunk name
     ---@return Worker
     start = function(code, name) end,
 

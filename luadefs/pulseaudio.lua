@@ -87,7 +87,7 @@ pulseaudio.Context = {
     new = function(mainloop, name) end,
 
     ---@param self Context
-    ---@param server boolean?
+    ---@param server? boolean
     connect = function(self, server) end,
 
     ---@param self Context
@@ -99,7 +99,7 @@ pulseaudio.Context = {
     get_state = function(self) end,
 
     ---@param self Context
-    ---@param mask InterestMaskSet?
+    ---@param mask? InterestMaskSet
     ---@param callback fun(success: boolean)
     subscribe = function(self, mask, callback) end,
 
@@ -124,12 +124,12 @@ pulseaudio.Context = {
     ---@param self Context
     ---@param index integer
     ---@param mute boolean
-    ---@param callback fun(success: boolean):nil?
+    ---@param callback? fun(success: boolean):nil
     set_sink_mute_by_index = function(self, index, mute, callback) end,
 
     ---@param self Context
     ---@param index integer
     ---@param volume integer[]
-    ---@param callback fun(success: boolean):nil?
+    ---@param callback? fun(success: boolean):nil
     set_sink_volume_by_index = function(self, index, volume, callback) end
 }

@@ -466,7 +466,7 @@ gtk.Entry                  = {
     buffer = function(self) end,
 
     ---@param self Entry
-    ---@param text string?
+    ---@param text? string
     set_placeholder_text = function(self, text) end,
 
     ---@param self Entry
@@ -670,7 +670,7 @@ gtk.Scale                  = {
     ---@param orientation Orientation
     ---@param min number
     ---@param max number
-    ---@param step number? 1.0 by default
+    ---@param step? number 1.0 by default
     ---@return Scale
     with_range = function(orientation, min, max, step) end,
 

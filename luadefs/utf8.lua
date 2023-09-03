@@ -9,6 +9,6 @@ function utf8.len(str) end
 
 ---@param str string
 ---@param i integer
----@param j integer?
+---@param j? integer
 ---@return string
 function utf8.sub(str, i, j) end

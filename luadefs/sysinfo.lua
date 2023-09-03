@@ -51,7 +51,7 @@ sysinfo.System = {
     ---@return System
     new_all = function() end,
 
-    ---@param refreshes RefreshKind?
+    ---@param refreshes? RefreshKind
     ---@return System
     new_with_specifics = function(refreshes) end,
 
@@ -68,7 +68,7 @@ sysinfo.System = {
     refresh_cpu = function(self) end,
 
     ---@param self System
-    ---@param kind CpuRefreshKind?
+    ---@param kind? CpuRefreshKind
     refresh_cpu_specifics = function(self, kind) end,
 
     ---@param self System
@@ -76,12 +76,12 @@ sysinfo.System = {
     refresh_process = function(self, pid) end,
 
     ---@param self System
-    ---@param kind ProcessRefreshKind?
+    ---@param kind? ProcessRefreshKind
     refresh_processes_specifics = function(self, kind) end,
 
     ---@param self System
     ---@param pid number
-    ---@param kind ProcessRefreshKind?
+    ---@param kind? ProcessRefreshKind
     refresh_process_specifics = function(self, pid, kind) end,
 
     ---@param self System
