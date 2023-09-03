@@ -66,6 +66,13 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
         Ok(())
     });
 
+    reg.add_method("set_sensitive", |_, this, sensitive: bool| {
+        this.set_sensitive(sensitive);
+        Ok(())
+    });
+
+    reg.add_method("is_sensitive", |_, this, ()| Ok(this.is_sensitive()));
+
     reg.add_method("set_valign", |_, this, align: enums::Align| {
         this.set_valign(align.0);
         Ok(())

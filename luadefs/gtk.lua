@@ -184,6 +184,14 @@ local WidgetImpl           = {
     remove_css_class = function(self, class) end,
 
     ---@param self WidgetImpl
+    ---@param sensitive boolean
+    set_sensitive = function(self, sensitive) end,
+
+    ---@param self WidgetImpl
+    ---@return boolean
+    is_sensitive = function(self) end,
+
+    ---@param self WidgetImpl
     ---@param align Align
     set_valign = function(self, align) end,
 
