@@ -120,4 +120,16 @@ pulseaudio.Context = {
     ---@param name string
     ---@param callback fun(sink: SinkInfo)
     get_sink_info_by_name = function(self, name, callback) end,
+
+    ---@param self Context
+    ---@param index integer
+    ---@param mute boolean
+    ---@param callback fun(success: boolean):nil?
+    set_sink_mute_by_index = function(self, index, mute, callback) end,
+
+    ---@param self Context
+    ---@param index integer
+    ---@param volume integer[]
+    ---@param callback fun(success: boolean):nil?
+    set_sink_volume_by_index = function(self, index, volume, callback) end
 }

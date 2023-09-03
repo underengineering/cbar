@@ -1,5 +1,6 @@
 use gtk::glib::MainContext;
 use mlua::{prelude::*, IntoLua};
+use pulse::volume::ChannelVolumes;
 
 use crate::utils::catch_lua_errors;
 
@@ -39,6 +40,33 @@ impl<'lua> IntoLua<'lua> for ChannelVolumesWrapper {
         }
 
         Ok(LuaValue::Table(table))
+    }
+}
+
+impl<'lua> FromLua<'lua> for ChannelVolumesWrapper {
+    fn from_lua(value: LuaValue<'lua>, _: &'lua Lua) -> LuaResult<Self> {
+        if let LuaValue::Table(table) = value {
+            let mut volume = ChannelVolumes::default();
+            volume.set_len(table.raw_len() as u8);
+
+            let volume_slice = volume.get_mut();
+            for (key, value) in table
+                .sequence_values::<u32>()
+                .take(u8::MAX as usize)
+                .enumerate()
+            {
+                let value = value?;
+                volume_slice[key] = pulse::volume::Volume(value);
+            }
+
+            Ok(Self(volume))
+        } else {
+            Err(LuaError::FromLuaConversionError {
+                from: value.type_name(),
+                to: stringify!($typ),
+                message: None,
+            })
+        }
     }
 }
 
@@ -221,6 +249,44 @@ fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
                             catch_lua_errors::<_, ()>(f.to_ref(), SinkInfoWrapper(item));
                         }
                     });
+
+                Ok(())
+            },
+        );
+
+        reg.add_method(
+            "set_sink_mute_by_index",
+            |_, this, (index, mute, f): (u32, bool, Option<LuaOwnedFunction>)| {
+                if let Some(f) = f {
+                    this.introspect().set_sink_mute_by_index(
+                        index,
+                        mute,
+                        Some(Box::new(move |success| {
+                            catch_lua_errors::<_, ()>(f.to_ref(), success);
+                        })),
+                    );
+                } else {
+                    this.introspect().set_sink_mute_by_index(index, mute, None);
+                }
+
+                Ok(())
+            },
+        );
+
+        reg.add_method(
+            "set_sink_volume_by_index",
+            |_, this, (index, volume, f): (u32, ChannelVolumesWrapper, Option<LuaOwnedFunction>)| {
+                if let Some(f) = f {
+                    this.introspect().set_sink_volume_by_index(
+                        index,
+                        &volume.0,
+                        Some(Box::new(move |success| {
+                            catch_lua_errors::<_, ()>(f.to_ref(), success);
+                        })),
+                    );
+                } else {
+                    this.introspect().set_sink_volume_by_index(index, &volume.0, None);
+                }
 
                 Ok(())
             },
