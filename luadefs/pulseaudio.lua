@@ -76,7 +76,7 @@ pulseaudio.Mainloop = {
 ---@field NORMAL integer
 ---@field MUTED integer
 ---@field MAX integer
----@field INTEGER integer
+---@field INVALID integer
 pulseaudio.Volume = {}
 
 ---@class Context
