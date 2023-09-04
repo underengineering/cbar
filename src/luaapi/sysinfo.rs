@@ -121,7 +121,7 @@ impl LuaApi for System {
 
         reg.add_method("global_cpu_info", |lua, this, ()| {
             let cpu = this.global_cpu_info();
-            let cpu_table = lua.create_table()?;
+            let cpu_table = lua.create_table_with_capacity(0, 5)?;
             push_cpu(cpu, &cpu_table)?;
 
             Ok(cpu_table)

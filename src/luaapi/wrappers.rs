@@ -52,7 +52,7 @@ impl<'lua> IntoLua<'lua> for GStringWrapper {
 pub struct ModifierTypeWrapper(pub ModifierType);
 impl<'lua> IntoLua<'lua> for ModifierTypeWrapper {
     fn into_lua(self, lua: &'lua Lua) -> LuaResult<LuaValue> {
-        let table = lua.create_table()?;
+        let table = lua.create_table_with_capacity(0, self.0.bits().count_ones() as usize)?;
         unpack_mask_postfixed!(
             table,
             self.0,
