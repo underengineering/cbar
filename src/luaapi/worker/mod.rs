@@ -6,14 +6,15 @@ mod error;
 #[allow(clippy::module_inception)]
 mod worker;
 
+use crate::traits::LuaApi;
+
 use self::worker::{Worker, WorkerData, WorkerEvent};
 
-fn add_worker_api(lua: &Lua, worker_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<Sender<WorkerData>>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Sender<WorkerData> {}")
-        });
+impl LuaApi for Sender<WorkerData> {
+    const CLASS_NAME: &'static str = "Sender<WorkerData>";
+    const CONSTRUCTIBLE: bool = false;
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("send", |lua, this, value: LuaValue| {
             this.send(WorkerData::from_lua(value, lua)?).into_lua_err()
         });
@@ -25,18 +26,19 @@ fn add_worker_api(lua: &Lua, worker_table: &LuaTable) -> LuaResult<()> {
                 Err(err) => Err(err).into_lua_err()?,
             }
         });
-    })?;
+    }
+}
 
-    lua.register_userdata_type::<Receiver<WorkerEvent>>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Receiver<WorkerData> {}")
-        });
+impl LuaApi for Receiver<WorkerEvent> {
+    const CLASS_NAME: &'static str = "Receiver<WorkerEvent>";
+    const CONSTRUCTIBLE: bool = false;
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("recv", |lua, this, ()| {
             Ok(match this.recv().into_lua_err()? {
                 WorkerEvent::UserData(data) => data.into_lua(lua)?,
-                WorkerEvent::Done => LuaValue::Nil, // TODO: Throw a error?
                 WorkerEvent::Error(err) => Err(err)?,
+                WorkerEvent::Done => LuaValue::Nil, // TODO: Throw a error?
             })
         });
 
@@ -53,26 +55,32 @@ fn add_worker_api(lua: &Lua, worker_table: &LuaTable) -> LuaResult<()> {
                 Err(err) => Err(err).into_lua_err()?,
             })
         });
-    })?;
+    }
+}
 
-    lua.register_userdata_type::<Worker>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Worker {}")
-        });
+impl LuaApi for Worker {
+    const CLASS_NAME: &'static str = "Worker";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("dead", |_, this, ()| Ok(this.dead()));
 
-        reg.add_method("join", |_, this, ()| {
-            let receiver = this.receiver();
-            loop {
-                match receiver.recv().into_lua_err()? {
-                    WorkerEvent::Done => break,
-                    WorkerEvent::Error(err) => Err(err).into_lua_err()?,
-                    _ => {}
+        reg.add_method("join", |lua, this, ()| {
+            if this.dead() {
+                // Prevent deadlocking
+                Ok(LuaValue::Nil)
+            } else {
+                let receiver = this.receiver();
+                let results = lua.create_table()?;
+                loop {
+                    match receiver.recv().into_lua_err()? {
+                        WorkerEvent::UserData(data) => results.push(data)?,
+                        WorkerEvent::Error(err) => Err(err).into_lua_err()?,
+                        WorkerEvent::Done => break,
+                    };
                 }
-            }
 
-            Ok(())
+                Ok(LuaValue::Table(results))
+            }
         });
 
         reg.add_method("sender", |lua, this, ()| {
@@ -82,24 +90,29 @@ fn add_worker_api(lua: &Lua, worker_table: &LuaTable) -> LuaResult<()> {
         reg.add_method("receiver", |lua, this, ()| {
             lua.create_any_userdata(this.receiver())
         });
-    })?;
+    }
 
-    let worker = lua.create_table()?;
-    worker.set(
-        "start",
-        lua.create_function(|lua, (code, name): (String, Option<String>)| {
-            let worker = Worker::start(code, name).into_lua_err()?;
-            lua.create_any_userdata(worker)
-        })?,
-    )?;
-    worker_table.set("Worker", worker)?;
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "start",
+            lua.create_function(|lua, (code, name): (String, Option<String>)| {
+                let worker = Worker::start(code, name).into_lua_err()?;
+                lua.create_any_userdata(worker)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
+pub fn push_api(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
     let worker_table = lua.create_table()?;
 
-    add_worker_api(lua, &worker_table)?;
+    Sender::<WorkerData>::push_lua(lua, &worker_table)?;
+    Receiver::<WorkerEvent>::push_lua(lua, &worker_table)?;
+    Worker::push_lua(lua, &worker_table)?;
 
-    Ok(worker_table)
+    table.set("worker", worker_table)?;
+
+    Ok(())
 }

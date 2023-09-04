@@ -12,17 +12,16 @@ use mlua::prelude::*;
 use paste::paste;
 use std::{ffi::OsStr, path::Path};
 
-use crate::macros::register_signals;
 use crate::utils::catch_lua_errors;
+use crate::{macros::register_signals, traits::LuaApi};
 
 use super::wrappers::SubprocessFlagsWrapper;
 
-fn add_async_read_buf_api(lua: &Lua) -> LuaResult<()> {
-    lua.register_userdata_type::<InputStreamAsyncBufRead<InputStream>>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("InputStreamAsyncBufRead<InputStream> {}")
-        });
+impl LuaApi for InputStreamAsyncBufRead<InputStream> {
+    const CLASS_NAME: &'static str = "InputStreamAsyncBufRead<InputStream>";
+    const CONSTRUCTIBLE: bool = false;
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_async_method_mut("read_line", |_, this, capacity: Option<usize>| async move {
             let mut buffer = capacity.map_or_else(String::new, String::with_capacity);
             this.read_line(&mut buffer).await.into_lua_err()?;
@@ -46,17 +45,14 @@ fn add_async_read_buf_api(lua: &Lua) -> LuaResult<()> {
             let read = this.read_to_end(&mut buffer).await.into_lua_err()?;
             lua.create_string(&buffer[..read])
         });
-    })?;
-
-    Ok(())
+    }
 }
 
-fn add_streams_api(lua: &Lua) -> LuaResult<()> {
-    lua.register_userdata_type::<InputStream>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("InputStream {}")
-        });
+impl LuaApi for InputStream {
+    const CLASS_NAME: &'static str = "InputStream";
+    const CONSTRUCTIBLE: bool = false;
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_function(
             "into_async_buf_read",
             |lua, (this, buffer_size): (LuaOwnedAnyUserData, usize)| {
@@ -85,13 +81,13 @@ fn add_streams_api(lua: &Lua) -> LuaResult<()> {
             this.close_future(PRIORITY_DEFAULT).await.into_lua_err()?;
             Ok(())
         });
-    })?;
+    }
+}
 
-    lua.register_userdata_type::<OutputStream>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("OutputStream {}")
-        });
+impl LuaApi for OutputStream {
+    const CLASS_NAME: &'static str = "OutputStream";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_async_method("write", |_, this, data: LuaString| async move {
             let buffer = Bytes::from(data.as_bytes());
             let written = this
@@ -114,17 +110,13 @@ fn add_streams_api(lua: &Lua) -> LuaResult<()> {
             this.close_future(PRIORITY_DEFAULT).await.into_lua_err()?;
             Ok(())
         });
-    })?;
-
-    Ok(())
+    }
 }
 
-fn add_subprocess_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<Subprocess>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Subprocess {}")
-        });
+impl LuaApi for Subprocess {
+    const CLASS_NAME: &'static str = "Subprocess";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_async_method(
             "communicate_raw",
             |lua, this, data: Option<String>| async move {
@@ -209,31 +201,31 @@ fn add_subprocess_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
                 Ok(None)
             }
         });
-    })?;
-    let subprocess = lua.create_table()?;
-    subprocess.set(
-        "new",
-        lua.create_function(
-            |lua, (args, flags): (Vec<String>, SubprocessFlagsWrapper)| {
-                let proc =
-                    Subprocess::newv(&args.iter().map(OsStr::new).collect::<Vec<_>>(), flags.0)
-                        .into_lua_err()?;
+    }
 
-                lua.create_any_userdata(proc)
-            },
-        )?,
-    )?;
-    gio_table.set("Subprocess", subprocess)?;
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(
+                |lua, (args, flags): (Vec<String>, SubprocessFlagsWrapper)| {
+                    let proc =
+                        Subprocess::newv(&args.iter().map(OsStr::new).collect::<Vec<_>>(), flags.0)
+                            .into_lua_err()?;
 
-    Ok(())
+                    lua.create_any_userdata(proc)
+                },
+            )?,
+        )?;
+
+        Ok(())
+    }
 }
 
-pub fn add_socket_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<SocketConnection>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("SocketConnection {}")
-        });
+impl LuaApi for SocketConnection {
+    const CLASS_NAME: &'static str = "SocketConnection";
+    const CONSTRUCTIBLE: bool = false;
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("input_stream", |lua, this, ()| {
             lua.create_any_userdata(this.input_stream())
         });
@@ -245,42 +237,41 @@ pub fn add_socket_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
         reg.add_async_method("close", |_, this, ()| async move {
             this.close_future(PRIORITY_DEFAULT).await.into_lua_err()
         });
-    })?;
+    }
+}
 
-    lua.register_userdata_type::<SocketClient>(|reg| {
+impl LuaApi for SocketClient {
+    const CLASS_NAME: &'static str = "SocketClient";
+
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_async_method("connect_unix", |lua, this, path: String| async move {
             let address = UnixSocketAddress::new(Path::new(&path));
             let conn = this.connect_future(&address).await.into_lua_err()?;
             lua.create_any_userdata(conn)
         });
-    })?;
-    let socket_client = lua.create_table()?;
-    socket_client.set(
-        "new",
-        lua.create_function(|lua, ()| {
-            let socket = SocketClient::new();
-            lua.create_any_userdata(socket)
-        })?,
-    )?;
-    gio_table.set("SocketClient", socket_client)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let socket = SocketClient::new();
+                lua.create_any_userdata(socket)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_file_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<File>(|reg| {
-        /* reg.add_async_method(
-            "query_info",
-            |lua, this, (attributes, flags): (String,Option<LuaUserDataRef<FileQueryInfoFlags>>)| async move {
-                let flags = flags.as_deref().unwrap_or(&FileQueryInfoFlags::NONE);
-                this.query_info_future(&attributes, *flags, PRIORITY_DEFAULT).await.into_lua_err()?;
-                Ok(())
-            },
-        ); */
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, this, ()| {
-            lua.create_string(format!("File {{ path = {:?} }}", this.path()))
-        });
+impl LuaApi for File {
+    const CLASS_NAME: &'static str = "File";
 
+    fn to_lua_string<'a>(&self, lua: &'a Lua) -> LuaResult<LuaString<'a>> {
+        lua.create_string(format!("File {{ path = {:?} }}", self.path()))
+    }
+
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("path", |lua, this, ()| {
             let result = if let Some(path) = this.path() {
                 Some(lua.create_string(path.into_os_string().to_str().unwrap())?)
@@ -311,41 +302,43 @@ fn add_file_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
                 .into_lua_err()?;
             lua.create_any_userdata(stream.upcast::<OutputStream>())
         });
-    })?;
-    let file = lua.create_table()?;
-    file.set(
-        "for_path",
-        lua.create_function(|lua, path: String| lua.create_any_userdata(File::for_path(path)))?,
-    )?;
-    gio_table.set("File", file)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "for_path",
+            lua.create_function(|lua, path: String| lua.create_any_userdata(File::for_path(path)))?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_app_info_monitor_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<AppInfoMonitor>(|reg| {
+impl LuaApi for AppInfoMonitor {
+    const CLASS_NAME: &'static str = "AppInfoMonitor";
+
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         register_signals!(reg, [changed]);
+    }
 
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("AppInfoMonitor {}")
-        });
-    })?;
-    let app_info_monitor = lua.create_table()?;
-    app_info_monitor.set(
-        "get",
-        lua.create_function(|lua, ()| lua.create_any_userdata(AppInfoMonitor::get()))?,
-    )?;
-    gio_table.set("AppInfoMonitor", app_info_monitor)?;
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "get",
+            lua.create_function(|lua, ()| lua.create_any_userdata(AppInfoMonitor::get()))?,
+        )?;
 
-    Ok(())
+        Ok(())
+    }
 }
 
-fn add_app_info_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<AppInfo>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, this, ()| {
-            lua.create_string(format!("AppInfo {{ name = \"{}\" }}", this.name()))
-        });
+impl LuaApi for AppInfo {
+    const CLASS_NAME: &'static str = "AppInfo";
 
+    fn to_lua_string<'a>(&self, lua: &'a Lua) -> LuaResult<LuaString<'a>> {
+        lua.create_string(format!("AppInfo {{ name = \"{}\" }}", self.name()))
+    }
+
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("name", |lua, this, ()| {
             lua.create_string(this.name().as_str())
         });
@@ -406,32 +399,35 @@ fn add_app_info_api(lua: &Lua, gio_table: &LuaTable) -> LuaResult<()> {
         reg.add_method("supports_files", |_, this, ()| Ok(this.supports_files()));
         reg.add_method("supports_uris", |_, this, ()| Ok(this.supports_uris()));
         reg.add_method("can_delete", |_, this, ()| Ok(this.can_delete()));
-    })?;
-    let app_info = lua.create_table()?;
-    app_info.set(
-        "all",
-        lua.create_function(|lua, ()| {
-            AppInfo::all()
-                .into_iter()
-                .map(|x| lua.create_any_userdata(x))
-                .collect::<LuaResult<Vec<_>>>()
-        })?,
-    )?;
-    gio_table.set("AppInfo", app_info)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "all",
+            lua.create_function(|lua, ()| {
+                AppInfo::all()
+                    .into_iter()
+                    .map(|x| lua.create_any_userdata(x))
+                    .collect::<LuaResult<Vec<_>>>()
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
+pub fn push_api(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
     let gio_table = lua.create_table()?;
+    InputStreamAsyncBufRead::<InputStream>::push_lua(lua, &gio_table)?;
+    InputStream::push_lua(lua, &gio_table)?;
+    OutputStream::push_lua(lua, &gio_table)?;
+    Subprocess::push_lua(lua, &gio_table)?;
+    SocketConnection::push_lua(lua, &gio_table)?;
+    SocketClient::push_lua(lua, &gio_table)?;
+    File::push_lua(lua, &gio_table)?;
+    AppInfoMonitor::push_lua(lua, &gio_table)?;
+    AppInfo::push_lua(lua, &gio_table)?;
+    table.set("gio", gio_table)?;
 
-    add_async_read_buf_api(lua)?;
-    add_streams_api(lua)?;
-    add_subprocess_api(lua, &gio_table)?;
-    add_socket_api(lua, &gio_table)?;
-    add_file_api(lua, &gio_table)?;
-    add_app_info_monitor_api(lua, &gio_table)?;
-    add_app_info_api(lua, &gio_table)?;
-
-    Ok(gio_table)
+    Ok(())
 }

@@ -1,24 +1,6 @@
-use mlua::{prelude::*, Lua};
+use mlua::prelude::*;
 
 use crate::error::LuaErrorWrapper;
-
-pub trait LuaExt {
-    unsafe fn new_with_stock_allocator() -> Lua {
-        let state = mlua_sys::luaL_newstate();
-
-        mlua_sys::luaL_requiref(
-            state,
-            "_G" as *const str as *const i8,
-            mlua_sys::luaopen_base,
-            1,
-        );
-        mlua_sys::lua_pop(state, 1);
-
-        Lua::init_from_ptr(state)
-    }
-}
-
-impl LuaExt for Lua {}
 
 pub fn catch_lua_errors<'lua, A, R>(f: LuaFunction<'lua>, args: A) -> Option<R>
 where

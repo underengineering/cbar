@@ -1,4 +1,13 @@
-use gtk::{cairo, gio::Icon, glib, pango, prelude::*, Application, ApplicationWindow};
+use gtk::{
+    cairo,
+    gio::Icon,
+    glib::{self, MainContext},
+    pango,
+    prelude::*,
+    Application, ApplicationWindow, Box, Button, CenterBox, CheckButton, CssProvider, DrawingArea,
+    Entry, EventControllerFocus, EventControllerKey, EventControllerMotion, EventControllerScroll,
+    Grid, Image, Label, Overlay, Revealer, Scale, Settings,
+};
 use mlua::prelude::*;
 use paste::paste;
 
@@ -9,12 +18,14 @@ use super::{
         ModifierTypeWrapper,
     },
 };
-use crate::macros::register_signals;
 use crate::utils::{catch_lua_errors, catch_lua_errors_async};
+use crate::{macros::register_signals, traits::LuaApi};
 
 macro_rules! push_enum {
-    ($tbl:ident, $ns:ident, $name:ident, [$($variant:ident),+]) => {
-        $($tbl.set(stringify!($variant), enums::$name($ns::$name::$variant))?;)+
+    ($lua:ident, $tbl:ident, $ns:ident, $name:ident, [$($variant:ident),+]) => {
+        let enum_table = $lua.create_table()?;
+        $(enum_table.set(stringify!($variant), enums::$name($ns::$name::$variant))?;)+
+        $tbl.set(stringify!($name), enum_table)?;
     };
 }
 
@@ -133,35 +144,28 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
     );
 }
 
-// fn add_layout_manager_methods<T: glib::IsA<gtk::LayoutManager>>(
-//     reg: &mut LuaUserDataRegistry<'_, T>,
-// ) {
-//     reg.add_method("upcast", |lua, this, ()| {
-//         lua.create_any_userdata(this.clone().upcast::<gtk::LayoutManager>())
-//     });
-// }
+fn push_enums(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+    push_enum!(lua, gtk_table, gtk, Orientation, [Horizontal, Vertical]);
 
-fn add_enums(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    let orientation = lua.create_table()?;
-    push_enum!(orientation, gtk, Orientation, [Horizontal, Vertical]);
-    gtk_table.set("Orientation", orientation)?;
-
-    let align = lua.create_table()?;
-    push_enum!(align, gtk, Align, [Fill, Start, End, Center, Baseline]);
-    gtk_table.set("Align", align)?;
-
-    let ellipsize_mode = lua.create_table()?;
     push_enum!(
-        ellipsize_mode,
+        lua,
+        gtk_table,
+        gtk,
+        Align,
+        [Fill, Start, End, Center, Baseline]
+    );
+
+    push_enum!(
+        lua,
+        gtk_table,
         pango,
         EllipsizeMode,
         [None, Start, Middle, End]
     );
-    gtk_table.set("EllipsizeMode", ellipsize_mode)?;
 
-    let operator = lua.create_table()?;
     push_enum!(
-        operator,
+        lua,
+        gtk_table,
         cairo,
         Operator,
         [
@@ -196,8 +200,22 @@ fn add_enums(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             HslLuminosity
         ]
     );
-    gtk_table.set("Operator", operator)?;
 
+    push_enum!(
+        lua,
+        gtk_table,
+        gtk,
+        RevealerTransitionType,
+        [
+            None, Crossfade, SlideRight, SlideLeft, SlideUp, SlideDown, SwingRight, SwingLeft,
+            SwingUp, SwingDown
+        ]
+    );
+
+    Ok(())
+}
+
+fn push_constants(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     let priority = lua.create_table()?;
     priority.set("HIGH", lua.create_any_userdata(glib::PRIORITY_HIGH)?)?;
     priority.set("DEFAULT", lua.create_any_userdata(glib::PRIORITY_DEFAULT)?)?;
@@ -212,25 +230,13 @@ fn add_enums(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     priority.set("LOW", lua.create_any_userdata(glib::PRIORITY_LOW)?)?;
     gtk_table.set("Priority", priority)?;
 
-    let transition_type = lua.create_table()?;
-    push_enum!(
-        transition_type,
-        gtk,
-        RevealerTransitionType,
-        [
-            None, Crossfade, SlideRight, SlideLeft, SlideUp, SlideDown, SwingRight, SwingLeft,
-            SwingUp, SwingDown
-        ]
-    );
-    gtk_table.set("RevealerTransitionType", transition_type)?;
-
     Ok(())
 }
 
 fn add_global_functions(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     gtk_table.set(
         "style_context_add_provider",
-        lua.create_function(|_, provider: LuaUserDataRef<gtk::CssProvider>| {
+        lua.create_function(|_, provider: LuaUserDataRef<CssProvider>| {
             gtk::style_context_add_provider_for_display(
                 &gtk::gdk::Display::default().expect("Could not connect to the display"),
                 &*provider,
@@ -244,40 +250,37 @@ fn add_global_functions(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
-fn add_application_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<Application>(|reg| {
-        register_signals!(reg, [activate, startup, shutdown]);
+impl LuaApi for Application {
+    const CLASS_NAME: &'static str = "Application";
 
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Application {}")
-        });
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
+        register_signals!(reg, [activate, startup, shutdown]);
 
         reg.add_method("run", |_, this, ()| {
             this.run_with_args(&[""]);
             Ok(())
         });
-    })?;
-    let app = lua.create_table()?;
-    app.set(
-        "new",
-        lua.create_function(
-            |lua, (id, flags): (Option<String>, ApplicationFlagsWrapper)| {
-                let app = Application::new(id, flags.0);
-                lua.create_any_userdata(app)
-            },
-        )?,
-    )?;
-    gtk_table.set("Application", app)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(
+                |lua, (id, flags): (Option<String>, ApplicationFlagsWrapper)| {
+                    let app = Application::new(id, flags.0);
+                    lua.create_any_userdata(app)
+                },
+            )?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_application_window_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<ApplicationWindow>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("ApplicationWindow {}")
-        });
+impl LuaApi for ApplicationWindow {
+    const CLASS_NAME: &'static str = "ApplicationWindow";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("set_title", |_, this, title: Option<String>| {
             this.set_title(title.as_deref());
             Ok(())
@@ -302,27 +305,26 @@ fn add_application_window_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> 
         });
 
         add_widget_methods(reg);
-    })?;
-    let window = lua.create_table()?;
-    window.set(
-        "new",
-        lua.create_function(|lua, app: LuaUserDataRef<Application>| {
-            let window = ApplicationWindow::new(&*app);
-            lua.create_any_userdata(window)
-        })?,
-    )?;
-    gtk_table.set("ApplicationWindow", window)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, app: LuaUserDataRef<Application>| {
+                let window = ApplicationWindow::new(&*app);
+                lua.create_any_userdata(window)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_button_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<gtk::Button>(|reg| {
-        register_signals!(reg, [clicked]);
+impl LuaApi for Button {
+    const CLASS_NAME: &'static str = "Button";
 
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Button {}")
-        });
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
+        register_signals!(reg, [clicked]);
 
         reg.add_method("set_label", |_, this, label: String| {
             this.set_label(&label);
@@ -338,34 +340,33 @@ fn add_button_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         );
 
         add_widget_methods(reg);
-    })?;
-    let button = lua.create_table()?;
-    button.set(
-        "new",
-        lua.create_function(|lua, ()| {
-            let button = gtk::Button::new();
-            lua.create_any_userdata(button)
-        })?,
-    )?;
-    button.set(
-        "with_label",
-        lua.create_function(|lua, label: String| {
-            let button = gtk::Button::with_label(&label);
-            lua.create_any_userdata(button)
-        })?,
-    )?;
-    gtk_table.set("Button", button)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let button = Button::new();
+                lua.create_any_userdata(button)
+            })?,
+        )?;
+        table.set(
+            "with_label",
+            lua.create_function(|lua, label: String| {
+                let button = Button::with_label(&label);
+                lua.create_any_userdata(button)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_check_button_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<gtk::CheckButton>(|reg| {
-        register_signals!(reg, [toggled]);
+impl LuaApi for CheckButton {
+    const CLASS_NAME: &'static str = "CheckButton";
 
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("CheckButton {}")
-        });
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
+        register_signals!(reg, [toggled]);
 
         reg.add_method("set_active", |_, this, setting: bool| {
             this.set_active(setting);
@@ -382,7 +383,7 @@ fn add_check_button_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
         reg.add_method(
             "set_group",
-            |_, this, group: Option<LuaUserDataRef<gtk::CheckButton>>| {
+            |_, this, group: Option<LuaUserDataRef<CheckButton>>| {
                 this.set_group(group.as_deref());
                 Ok(())
             },
@@ -399,33 +400,32 @@ fn add_check_button_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         });
 
         add_widget_methods(reg);
-    })?;
-    let check_button = lua.create_table()?;
-    check_button.set(
-        "new",
-        lua.create_function(|lua, ()| {
-            let button = gtk::CheckButton::new();
-            lua.create_any_userdata(button)
-        })?,
-    )?;
-    check_button.set(
-        "with_label",
-        lua.create_function(|lua, label: String| {
-            let check_button = gtk::CheckButton::with_label(&label);
-            lua.create_any_userdata(check_button)
-        })?,
-    )?;
-    gtk_table.set("CheckButton", check_button)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let button = CheckButton::new();
+                lua.create_any_userdata(button)
+            })?,
+        )?;
+        table.set(
+            "with_label",
+            lua.create_function(|lua, label: String| {
+                let check_button = CheckButton::with_label(&label);
+                lua.create_any_userdata(check_button)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_overlay_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<gtk::Overlay>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Overlay {}")
-        });
+impl LuaApi for Overlay {
+    const CLASS_NAME: &'static str = "Overlay";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method(
             "set_child",
             |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
@@ -467,26 +467,25 @@ fn add_overlay_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         );
 
         add_widget_methods(reg);
-    })?;
-    let button = lua.create_table()?;
-    button.set(
-        "new",
-        lua.create_function(|lua, ()| {
-            let button = gtk::Overlay::new();
-            lua.create_any_userdata(button)
-        })?,
-    )?;
-    gtk_table.set("Overlay", button)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let button = Overlay::new();
+                lua.create_any_userdata(button)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_label_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<gtk::Label>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Label {}")
-        });
+impl LuaApi for Label {
+    const CLASS_NAME: &'static str = "Label";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("set_label", |_, this, str: String| {
             this.set_text(&str);
             Ok(())
@@ -503,26 +502,26 @@ fn add_label_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         });
 
         add_widget_methods(reg);
-    })?;
-    let button = lua.create_table()?;
-    button.set(
-        "new",
-        lua.create_function(|lua, str: Option<String>| {
-            let button = gtk::Label::new(str.as_deref());
-            lua.create_any_userdata(button)
-        })?,
-    )?;
-    gtk_table.set("Label", button)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, str: Option<String>| {
+                let button = Label::new(str.as_deref());
+                lua.create_any_userdata(button)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_entry_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<gtk::EntryBuffer>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("EntryBuffer {}")
-        });
+impl LuaApi for gtk::EntryBuffer {
+    const CLASS_NAME: &'static str = "EntryBuffer";
+    const CONSTRUCTIBLE: bool = false;
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method(
             "connect_deleted_text",
             |_, this, (f, after): (LuaOwnedFunction, Option<bool>)| {
@@ -564,14 +563,14 @@ fn add_entry_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             this.set_text(chars);
             Ok(())
         })
-    })?;
+    }
+}
 
-    lua.register_userdata_type::<gtk::Entry>(|reg| {
+impl LuaApi for Entry {
+    const CLASS_NAME: &'static str = "Entry";
+
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         register_signals!(reg, [activate]);
-
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Entry {}")
-        });
 
         reg.add_method("buffer", |lua, this, ()| {
             lua.create_any_userdata(this.buffer())
@@ -603,26 +602,25 @@ fn add_entry_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         });
 
         add_widget_methods(reg);
-    })?;
-    let entry = lua.create_table()?;
-    entry.set(
-        "new",
-        lua.create_function(|lua, ()| {
-            let entry = gtk::Entry::new();
-            lua.create_any_userdata(entry)
-        })?,
-    )?;
-    gtk_table.set("Entry", entry)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let entry = Entry::new();
+                lua.create_any_userdata(entry)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<gtk::Box>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Box {}")
-        });
+impl LuaApi for Box {
+    const CLASS_NAME: &'static str = "Box";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("prepend", |_, this, child: LuaUserDataRef<gtk::Widget>| {
             this.prepend(&*child);
             Ok(())
@@ -665,28 +663,27 @@ fn add_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         });
 
         add_widget_methods(reg);
-    })?;
-    let gbox = lua.create_table()?;
-    gbox.set(
-        "new",
-        lua.create_function(
-            |lua, (orientation, spacing): (enums::Orientation, Option<i32>)| {
-                let gbox = gtk::Box::new(orientation.0, spacing.unwrap_or(0));
-                lua.create_any_userdata(gbox)
-            },
-        )?,
-    )?;
-    gtk_table.set("Box", gbox)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(
+                |lua, (orientation, spacing): (enums::Orientation, Option<i32>)| {
+                    let gbox = Box::new(orientation.0, spacing.unwrap_or(0));
+                    lua.create_any_userdata(gbox)
+                },
+            )?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_grid_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<gtk::Grid>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Grid {}")
-        });
+impl LuaApi for Grid {
+    const CLASS_NAME: &'static str = "Grid";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method(
             "attach",
             |_,
@@ -743,26 +740,25 @@ fn add_grid_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         });
 
         add_widget_methods(reg);
-    })?;
-    let grid = lua.create_table()?;
-    grid.set(
-        "new",
-        lua.create_function(|lua, ()| {
-            let grid = gtk::Grid::new();
-            lua.create_any_userdata(grid)
-        })?,
-    )?;
-    gtk_table.set("Grid", grid)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let grid = Grid::new();
+                lua.create_any_userdata(grid)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_center_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<gtk::CenterBox>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("CenterBox {}")
-        });
+impl LuaApi for CenterBox {
+    const CLASS_NAME: &'static str = "CenterBox";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method(
             "set_start_widget",
             |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
@@ -788,26 +784,26 @@ fn add_center_box_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         );
 
         add_widget_methods(reg);
-    })?;
-    let center_box = lua.create_table()?;
-    center_box.set(
-        "new",
-        lua.create_function(|lua, ()| {
-            let center_box = gtk::CenterBox::new();
-            lua.create_any_userdata(center_box)
-        })?,
-    )?;
-    gtk_table.set("CenterBox", center_box)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let center_box = CenterBox::new();
+                lua.create_any_userdata(center_box)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_drawing_area_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<gtk::cairo::Context>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Context {}")
-        });
+impl LuaApi for gtk::cairo::Context {
+    const CLASS_NAME: &'static str = "CairoContext";
+    const CONSTRUCTIBLE: bool = false;
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method(
             "set_source_rgb",
             |_, this, (red, green, blue): (f64, f64, f64)| {
@@ -927,13 +923,13 @@ fn add_drawing_area_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         reg.add_method("fill", |_, this, ()| this.fill().into_lua_err());
         reg.add_method("save", |_, this, ()| this.save().into_lua_err());
         reg.add_method("restore", |_, this, ()| this.restore().into_lua_err());
-    })?;
+    }
+}
 
-    lua.register_userdata_type::<gtk::DrawingArea>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("DrawingArea {}")
-        });
+impl LuaApi for DrawingArea {
+    const CLASS_NAME: &'static str = "DrawingArea";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("set_content_width", |_, this, width: i32| {
             this.set_content_width(width);
             Ok(())
@@ -959,26 +955,25 @@ fn add_drawing_area_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         });
 
         add_widget_methods(reg);
-    })?;
-    let drawing_area = lua.create_table()?;
-    drawing_area.set(
-        "new",
-        lua.create_function(|lua, ()| {
-            let drawing_area = gtk::DrawingArea::new();
-            lua.create_any_userdata(drawing_area)
-        })?,
-    )?;
-    gtk_table.set("DrawingArea", drawing_area)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let drawing_area = DrawingArea::new();
+                lua.create_any_userdata(drawing_area)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_image_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<gtk::Image>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Image {}")
-        });
+impl LuaApi for Image {
+    const CLASS_NAME: &'static str = "Image";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("set_pixel_size", |_, this, pixel_size: i32| {
             this.set_pixel_size(pixel_size);
             Ok(())
@@ -1008,49 +1003,51 @@ fn add_image_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         });
 
         add_widget_methods(reg);
-    })?;
-    let image = lua.create_table()?;
-    image.set(
-        "new",
-        lua.create_function(|lua, ()| {
-            let image = gtk::Image::new();
-            lua.create_any_userdata(image)
-        })?,
-    )?;
-    image.set(
-        "from_file",
-        lua.create_function(|lua, path: String| {
-            let image = gtk::Image::from_file(path);
-            lua.create_any_userdata(image)
-        })?,
-    )?;
-    image.set(
-        "from_icon_name",
-        lua.create_function(|lua, icon_name: String| {
-            let image = gtk::Image::from_icon_name(&icon_name);
-            lua.create_any_userdata(image)
-        })?,
-    )?;
-    image.set(
-        "from_gicon",
-        lua.create_function(|lua, icon: LuaUserDataRef<Icon>| {
-            let image = gtk::Image::from_gicon(&*icon);
-            lua.create_any_userdata(image)
-        })?,
-    )?;
-    gtk_table.set("Image", image)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let image = Image::new();
+                lua.create_any_userdata(image)
+            })?,
+        )?;
+        table.set(
+            "from_file",
+            lua.create_function(|lua, path: String| {
+                let image = Image::from_file(path);
+                lua.create_any_userdata(image)
+            })?,
+        )?;
+        table.set(
+            "from_icon_name",
+            lua.create_function(|lua, icon_name: String| {
+                let image = Image::from_icon_name(&icon_name);
+                lua.create_any_userdata(image)
+            })?,
+        )?;
+        table.set(
+            "from_gicon",
+            lua.create_function(|lua, icon: LuaUserDataRef<Icon>| {
+                let image = Image::from_gicon(&*icon);
+                lua.create_any_userdata(image)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-// TODO: add_mark
-fn add_scale_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<gtk::Scale>(|reg| {
-        register_signals!(reg, [value_changed]);
+impl LuaApi for Scale {
+    const CLASS_NAME: &'static str = "Scale";
 
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Scale {}")
-        });
+    fn to_lua_string<'a>(&self, lua: &'a Lua) -> LuaResult<LuaString<'a>> {
+        lua.create_string(format!("Scale {{ value = {} }}", self.value()))
+    }
+
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
+        register_signals!(reg, [value_changed]);
 
         reg.add_method("connect_adjust_bounds", |_, this, f: LuaOwnedFunction| {
             this.connect_adjust_bounds(move |_, value| {
@@ -1124,28 +1121,27 @@ fn add_scale_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         });
 
         add_widget_methods(reg);
-    })?;
-    let scale = lua.create_table()?;
-    scale.set(
-        "with_range",
-        lua.create_function(
-            |lua, (orientation, min, max, step): (enums::Orientation, f64, f64, Option<f64>)| {
-                let scale = gtk::Scale::with_range(orientation.0, min, max, step.unwrap_or(1.0));
-                lua.create_any_userdata(scale)
-            },
-        )?,
-    )?;
-    gtk_table.set("Scale", scale)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "with_range",
+            lua.create_function(
+                |lua, (orientation, min, max, step): (enums::Orientation, f64, f64, Option<f64>)| {
+                    let scale = Scale::with_range(orientation.0, min, max, step.unwrap_or(1.0));
+                    lua.create_any_userdata(scale)
+                },
+            )?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_revealer_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<gtk::Revealer>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Revealer {}")
-        });
+impl LuaApi for Revealer {
+    const CLASS_NAME: &'static str = "Revealer";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method(
             "set_child",
             |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
@@ -1173,25 +1169,25 @@ fn add_revealer_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         );
 
         add_widget_methods(reg);
-    })?;
-    let revealer = lua.create_table()?;
-    revealer.set(
-        "new",
-        lua.create_function(|lua, ()| {
-            let image = gtk::Revealer::new();
-            lua.create_any_userdata(image)
-        })?,
-    )?;
-    gtk_table.set("Revealer", revealer)?;
-    Ok(())
+    }
+
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let image = Revealer::new();
+                lua.create_any_userdata(image)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_event_controller_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<gtk::EventControllerKey>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("EventControllerKey {}")
-        });
+impl LuaApi for EventControllerKey {
+    const CLASS_NAME: &'static str = "EventControllerKey";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("upcast", |lua, this, ()| {
             lua.create_any_userdata(this.clone().upcast::<gtk::EventController>())
         });
@@ -1227,22 +1223,25 @@ fn add_event_controller_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
             Ok(())
         });
-    })?;
-    let event_controller_key = lua.create_table()?;
-    event_controller_key.set(
-        "new",
-        lua.create_function(|lua, ()| {
-            let event_controller = gtk::EventControllerKey::new();
-            lua.create_any_userdata(event_controller)
-        })?,
-    )?;
-    gtk_table.set("EventControllerKey", event_controller_key)?;
+    }
 
-    lua.register_userdata_type::<gtk::EventControllerScroll>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("EventControllerScroll {}")
-        });
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let event_controller = EventControllerKey::new();
+                lua.create_any_userdata(event_controller)
+            })?,
+        )?;
 
+        Ok(())
+    }
+}
+
+impl LuaApi for EventControllerScroll {
+    const CLASS_NAME: &'static str = "EventControllerScroll";
+
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         register_signals!(reg, [scroll_begin, scroll_end]);
 
         reg.add_method("upcast", |lua, this, ()| {
@@ -1266,23 +1265,26 @@ fn add_event_controller_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
             Ok(())
         });
-    })?;
-    let event_controller_scroll = lua.create_table()?;
-    event_controller_scroll.set(
-        "new",
-        lua.create_function(|lua, flags: EventControllerScrollFlagsWrapper| {
-            let event_controller = gtk::EventControllerScroll::new(flags.0);
-            lua.create_any_userdata(event_controller)
-        })?,
-    )?;
-    gtk_table.set("EventControllerScroll", event_controller_scroll)?;
+    }
 
-    lua.register_userdata_type::<gtk::EventControllerMotion>(|reg| {
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, flags: EventControllerScrollFlagsWrapper| {
+                let event_controller = EventControllerScroll::new(flags.0);
+                lua.create_any_userdata(event_controller)
+            })?,
+        )?;
+
+        Ok(())
+    }
+}
+
+impl LuaApi for EventControllerMotion {
+    const CLASS_NAME: &'static str = "EventControllerMotion";
+
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         register_signals!(reg, [leave]);
-
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("EventControllerMotion {}")
-        });
 
         reg.add_method("upcast", |lua, this, ()| {
             lua.create_any_userdata(this.clone().upcast::<gtk::EventController>())
@@ -1303,47 +1305,50 @@ fn add_event_controller_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
 
             Ok(())
         });
-    })?;
-    let event_controller_motion = lua.create_table()?;
-    event_controller_motion.set(
-        "new",
-        lua.create_function(|lua, ()| {
-            let event_controller = gtk::EventControllerMotion::new();
-            lua.create_any_userdata(event_controller)
-        })?,
-    )?;
-    gtk_table.set("EventControllerMotion", event_controller_motion)?;
+    }
 
-    lua.register_userdata_type::<gtk::EventControllerFocus>(|reg| {
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let event_controller = EventControllerMotion::new();
+                lua.create_any_userdata(event_controller)
+            })?,
+        )?;
+
+        Ok(())
+    }
+}
+
+impl LuaApi for EventControllerFocus {
+    const CLASS_NAME: &'static str = "EventControllerFocus";
+
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         register_signals!(reg, [enter, leave]);
-
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("EventControllerFocus {}")
-        });
 
         reg.add_method("upcast", |lua, this, ()| {
             lua.create_any_userdata(this.clone().upcast::<gtk::EventController>())
         });
-    })?;
-    let event_controller_focus = lua.create_table()?;
-    event_controller_focus.set(
-        "new",
-        lua.create_function(|lua, ()| {
-            let event_controller = gtk::EventControllerFocus::new();
-            lua.create_any_userdata(event_controller)
-        })?,
-    )?;
-    gtk_table.set("EventControllerFocus", event_controller_focus)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let event_controller = EventControllerFocus::new();
+                lua.create_any_userdata(event_controller)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_settings_api(lua: &Lua) -> LuaResult<()> {
-    lua.register_userdata_type::<gtk::Settings>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("Settings {}")
-        });
+impl LuaApi for Settings {
+    const CLASS_NAME: &'static str = "Settings";
+    const CONSTRUCTIBLE: bool = false;
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("gtk_cursor_theme_name", |_, this, ()| {
             Ok(this.gtk_cursor_theme_name().map(GStringWrapper))
         });
@@ -1391,17 +1396,13 @@ fn add_settings_api(lua: &Lua) -> LuaResult<()> {
                 Ok(())
             },
         );
-    })?;
-
-    Ok(())
+    }
 }
 
-fn add_css_provider(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<gtk::CssProvider>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("CssProvider {}")
-        });
+impl LuaApi for CssProvider {
+    const CLASS_NAME: &'static str = "CssProvider";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("load_from_data", |_, this, data: String| {
             this.load_from_data(&data);
             Ok(())
@@ -1411,26 +1412,25 @@ fn add_css_provider(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             this.load_from_path(path);
             Ok(())
         });
-    })?;
-    let gbox = lua.create_table()?;
-    gbox.set(
-        "new",
-        lua.create_function(|lua, ()| {
-            let provider = gtk::CssProvider::new();
-            lua.create_any_userdata(provider)
-        })?,
-    )?;
-    gtk_table.set("CssProvider", gbox)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let provider = CssProvider::new();
+                lua.create_any_userdata(provider)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_context_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<glib::MainContext>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("MainContext {}")
-        });
+impl LuaApi for MainContext {
+    const CLASS_NAME: &'static str = "MainContext";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("spawn_local", |_, this, f: LuaOwnedFunction| {
             this.spawn_local(async move {
                 catch_lua_errors_async::<_, ()>(f.to_ref(), ()).await;
@@ -1447,61 +1447,64 @@ fn add_context_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
                 Ok(())
             },
         );
-    })?;
-    let ctx = lua.create_table()?;
-    ctx.set(
-        "new",
-        lua.create_function(|lua, ()| {
-            let ctx = glib::MainContext::new();
-            lua.create_any_userdata(ctx)
-        })?,
-    )?;
-    ctx.set(
-        "default",
-        lua.create_function(|lua, ()| {
-            let ctx = glib::MainContext::default();
-            lua.create_any_userdata(ctx)
-        })?,
-    )?;
-    ctx.set(
-        "thread_default",
-        lua.create_function(|lua, ()| {
-            Ok(if let Some(ctx) = glib::MainContext::thread_default() {
-                Some(lua.create_any_userdata(ctx)?)
-            } else {
-                None
-            })
-        })?,
-    )?;
-    gtk_table.set("MainContext", ctx)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let ctx = MainContext::new();
+                lua.create_any_userdata(ctx)
+            })?,
+        )?;
+        table.set(
+            "default",
+            lua.create_function(|lua, ()| {
+                let ctx = MainContext::default();
+                lua.create_any_userdata(ctx)
+            })?,
+        )?;
+        table.set(
+            "thread_default",
+            lua.create_function(|lua, ()| {
+                Ok(if let Some(ctx) = MainContext::thread_default() {
+                    Some(lua.create_any_userdata(ctx)?)
+                } else {
+                    None
+                })
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
+fn push_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     let layer_shell = lua.create_table()?;
 
-    let layer = lua.create_table()?;
     push_enum!(
-        layer,
+        lua,
+        layer_shell,
         gtk4_layer_shell,
         Layer,
         [Background, Bottom, Top, Overlay]
     );
-    layer_shell.set("Layer", layer)?;
 
-    let edge = lua.create_table()?;
-    push_enum!(edge, gtk4_layer_shell, Edge, [Left, Right, Top, Bottom]);
-    layer_shell.set("Edge", edge)?;
-
-    let keyboard_mode = lua.create_table()?;
     push_enum!(
-        keyboard_mode,
+        lua,
+        layer_shell,
+        gtk4_layer_shell,
+        Edge,
+        [Left, Right, Top, Bottom]
+    );
+
+    push_enum!(
+        lua,
+        layer_shell,
         gtk4_layer_shell,
         KeyboardMode,
         [None, Exclusive, OnDemand]
     );
-    layer_shell.set("KeyboardMode", keyboard_mode)?;
 
     layer_shell.set(
         "init_for_window",
@@ -1582,30 +1585,36 @@ fn add_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
-pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
+pub fn push_api(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
     let gtk_table = lua.create_table()?;
 
-    add_enums(lua, &gtk_table)?;
+    push_enums(lua, &gtk_table)?;
+    push_constants(lua, &gtk_table)?;
     add_global_functions(lua, &gtk_table)?;
-    add_application_api(lua, &gtk_table)?;
-    add_application_window_api(lua, &gtk_table)?;
-    add_overlay_api(lua, &gtk_table)?;
-    add_label_api(lua, &gtk_table)?;
-    add_entry_api(lua, &gtk_table)?;
-    add_button_api(lua, &gtk_table)?;
-    add_check_button_api(lua, &gtk_table)?;
-    add_box_api(lua, &gtk_table)?;
-    add_grid_api(lua, &gtk_table)?;
-    add_center_box_api(lua, &gtk_table)?;
-    add_drawing_area_api(lua, &gtk_table)?;
-    add_image_api(lua, &gtk_table)?;
-    add_scale_api(lua, &gtk_table)?;
-    add_revealer_api(lua, &gtk_table)?;
-    add_event_controller_api(lua, &gtk_table)?;
-    add_settings_api(lua)?;
-    add_css_provider(lua, &gtk_table)?;
-    add_context_api(lua, &gtk_table)?;
-    add_layer_shell_api(lua, &gtk_table)?;
+    Application::push_lua(lua, &gtk_table)?;
+    ApplicationWindow::push_lua(lua, &gtk_table)?;
+    Overlay::push_lua(lua, &gtk_table)?;
+    Label::push_lua(lua, &gtk_table)?;
+    Entry::push_lua(lua, &gtk_table)?;
+    Button::push_lua(lua, &gtk_table)?;
+    CheckButton::push_lua(lua, &gtk_table)?;
+    Box::push_lua(lua, &gtk_table)?;
+    Grid::push_lua(lua, &gtk_table)?;
+    CenterBox::push_lua(lua, &gtk_table)?;
+    DrawingArea::push_lua(lua, &gtk_table)?;
+    Image::push_lua(lua, &gtk_table)?;
+    Scale::push_lua(lua, &gtk_table)?;
+    Revealer::push_lua(lua, &gtk_table)?;
+    EventControllerKey::push_lua(lua, &gtk_table)?;
+    EventControllerScroll::push_lua(lua, &gtk_table)?;
+    EventControllerMotion::push_lua(lua, &gtk_table)?;
+    EventControllerFocus::push_lua(lua, &gtk_table)?;
+    Settings::push_lua(lua, &gtk_table)?;
+    CssProvider::push_lua(lua, &gtk_table)?;
+    MainContext::push_lua(lua, &gtk_table)?;
+    push_layer_shell_api(lua, &gtk_table)?;
 
-    Ok(gtk_table)
+    table.set("gtk", gtk_table)?;
+
+    Ok(())
 }

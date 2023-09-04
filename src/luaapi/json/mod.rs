@@ -6,7 +6,7 @@ mod error;
 
 use self::conversions::{TryFromJson, TryJsonFrom};
 
-pub fn add_json_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
+pub fn push_json_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
     let json = lua.create_table()?;
     json.set(
         "to_string",

@@ -1,16 +1,19 @@
 use clap::Parser;
 use mlua::prelude::*;
 use std::{env, fs, path::PathBuf};
-use utils::LuaExt;
 
 mod error;
 mod hyprland;
 mod luaapi;
 mod macros;
 mod system_info;
+mod traits;
 mod utils;
 
-use crate::error::{Error, LuaErrorWrapper};
+use crate::{
+    error::{Error, LuaErrorWrapper},
+    traits::LuaExt,
+};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -59,22 +62,14 @@ fn main() -> Result<(), Error> {
     lua.load_from_std_lib(LuaStdLib::ALL)?;
 
     let globals = lua.globals();
-    let gtk_table = luaapi::gtk::add_api(&lua)?;
-    let gio_table = luaapi::gio::add_api(&lua)?;
-    let utils_table = luaapi::utils::add_api(&lua)?;
-    let hyprland_table = luaapi::hyprland::add_api(&lua)?;
-    let sysinfo_table = luaapi::sysinfo::add_api(&lua)?;
-    let pulseaudio_table = luaapi::pulseaudio::add_api(&lua)?;
-    let utf8_table = luaapi::utf8::add_api(&lua)?;
-    let worker_table = luaapi::worker::add_api(&lua)?;
-    globals.set("gtk", gtk_table)?;
-    globals.set("gio", gio_table)?;
-    globals.set("utils", utils_table)?;
-    globals.set("hyprland", hyprland_table)?;
-    globals.set("sysinfo", sysinfo_table)?;
-    globals.set("pulseaudio", pulseaudio_table)?;
-    globals.set("utf8", utf8_table)?;
-    globals.set("worker", worker_table)?;
+    luaapi::gtk::push_api(&lua, &globals)?;
+    luaapi::gio::push_api(&lua, &globals)?;
+    luaapi::utils::push_api(&lua, &globals)?;
+    luaapi::hyprland::push_api(&lua, &globals)?;
+    luaapi::sysinfo::push_api(&lua, &globals)?;
+    luaapi::pulseaudio::push_api(&lua, &globals)?;
+    luaapi::utf8::push_api(&lua, &globals)?;
+    luaapi::worker::push_api(&lua, &globals)?;
 
     // Set current directory to the config path
     env::set_current_dir(

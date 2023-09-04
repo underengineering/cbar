@@ -1,13 +1,12 @@
 use mlua::prelude::*;
 
-pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
+pub fn push_api(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
     let utf8_table = lua.create_table()?;
 
     utf8_table.set(
         "len",
         lua.create_function(|_, str: String| Ok(str.chars().count()))?,
     )?;
-
     utf8_table.set(
         "sub",
         lua.create_function(|lua, (str, begin, end): (String, usize, Option<usize>)| {
@@ -19,14 +18,18 @@ pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
                 let begin = indices.nth(begin - 1).map_or(str.len(), |x| x.0);
                 let end = indices.nth(end - begin).map_or(str.len(), |x| x.0);
 
-                if cfg!(debug_assertions) {
-                    lua.create_string(&str[begin..end])
+                let slice = if cfg!(debug_assertions) {
+                    &str[begin..end]
                 } else {
-                    unsafe { lua.create_string(str.get_unchecked(begin..end)) }
-                }
+                    unsafe { str.get_unchecked(begin..end) }
+                };
+
+                lua.create_string(slice)
             }
         })?,
     )?;
 
-    Ok(utf8_table)
+    table.set("utf8", utf8_table)?;
+
+    Ok(())
 }
