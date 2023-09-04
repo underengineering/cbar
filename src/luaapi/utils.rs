@@ -133,7 +133,7 @@ fn push_other_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
                 ::continue::
             end
             io.write(("\t"):rep(depth))
-            io.write("}")
+            io.write("}\n")
             "#,
         )
         .into_function()?,
