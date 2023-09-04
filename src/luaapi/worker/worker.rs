@@ -1,11 +1,12 @@
-use super::error::Error;
-use crate::luaapi::{gio, gtk, hyprland, pulseaudio, sysinfo, utf8, utils};
 use crossbeam::channel::{self, Receiver, Sender};
 use mlua::prelude::*;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
 };
+
+use super::error::Error;
+use crate::luaapi::{gio, gtk, hyprland, pulseaudio, sysinfo, utf8, utils};
 
 pub enum WorkerData {
     Nil,
@@ -162,13 +163,13 @@ impl Worker {
         receiver: Receiver<WorkerData>,
     ) -> LuaResult<()> {
         let globals = lua.globals();
-        globals.set("gio", gio::add_api(lua)?)?;
-        globals.set("gtk", gtk::add_api(lua)?)?;
-        globals.set("hyprland", hyprland::add_api(lua)?)?;
-        globals.set("pulseaudio", pulseaudio::add_api(lua)?)?;
-        globals.set("sysinfo", sysinfo::add_api(lua)?)?;
-        globals.set("utf8", utf8::add_api(lua)?)?;
-        globals.set("utils", utils::add_api(lua)?)?;
+        gtk::push_api(lua, &globals)?;
+        gio::push_api(lua, &globals)?;
+        utils::push_api(lua, &globals)?;
+        hyprland::push_api(lua, &globals)?;
+        sysinfo::push_api(lua, &globals)?;
+        pulseaudio::push_api(lua, &globals)?;
+        utf8::push_api(lua, &globals)?;
 
         Self::add_channels_api(lua)?;
 

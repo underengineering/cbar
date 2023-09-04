@@ -2,9 +2,9 @@ use gtk::glib;
 use mlua::prelude::*;
 use std::time::Duration;
 
-use super::json::add_json_api;
+use super::json::push_json_api;
 
-fn add_grass_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
+fn push_grass_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
     utils_table.set(
         "scss_from_path",
         lua.create_function(|_, path: String| {
@@ -22,7 +22,7 @@ fn add_grass_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
-fn add_icons_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
+fn push_icons_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
     utils_table.set(
         "lookup_icon",
         lua.create_function(|_, (name, options): (String, Option<LuaTable>)| {
@@ -70,7 +70,7 @@ fn add_icons_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
-fn add_tokio_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
+fn push_tokio_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
     utils_table.set(
         "sleep",
         lua.create_async_function(|_, secs: f64| async move {
@@ -82,7 +82,7 @@ fn add_tokio_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
-fn add_other_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
+fn push_other_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
     utils_table.set(
         "print_table",
         lua.load(
@@ -142,14 +142,16 @@ fn add_other_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
-pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
+pub fn push_api(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
     let utils_table = lua.create_table()?;
 
-    add_grass_api(lua, &utils_table)?;
-    add_icons_api(lua, &utils_table)?;
-    add_tokio_api(lua, &utils_table)?;
-    add_json_api(lua, &utils_table)?;
-    add_other_api(lua, &utils_table)?;
+    push_grass_api(lua, &utils_table)?;
+    push_icons_api(lua, &utils_table)?;
+    push_tokio_api(lua, &utils_table)?;
+    push_json_api(lua, &utils_table)?;
+    push_other_api(lua, &utils_table)?;
 
-    Ok(utils_table)
+    table.set("utils", utils_table)?;
+
+    Ok(())
 }

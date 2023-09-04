@@ -5,14 +5,13 @@ use super::wrappers::RefreshKindWrapper;
 use crate::{
     luaapi::wrappers::{CpuRefreshKindWrapper, ProcessRefreshKindWrapper},
     system_info::battery,
+    traits::LuaApi,
 };
 
-fn add_system_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
-    lua.register_userdata_type::<System>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, _, ()| {
-            lua.create_string("System {}")
-        });
+impl LuaApi for System {
+    const CLASS_NAME: &'static str = "System";
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         // Refresh methods
         reg.add_method_mut("refresh_all", |_, this, ()| {
             this.refresh_all();
@@ -185,28 +184,29 @@ fn add_system_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
 
             Ok(networks_table)
         });
-    })?;
-    let system = lua.create_table()?;
-    system.set(
-        "new_all",
-        lua.create_function(|lua, ()| {
-            let system = System::new_all();
-            lua.create_any_userdata(system)
-        })?,
-    )?;
-    system.set(
-        "new_with_specifics",
-        lua.create_function(|lua, kind: RefreshKindWrapper| {
-            let system = System::new_with_specifics(kind.0);
-            lua.create_any_userdata(system)
-        })?,
-    )?;
-    sysinfo_table.set("System", system)?;
+    }
 
-    Ok(())
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new_all",
+            lua.create_function(|lua, ()| {
+                let system = System::new_all();
+                lua.create_any_userdata(system)
+            })?,
+        )?;
+        table.set(
+            "new_with_specifics",
+            lua.create_function(|lua, kind: RefreshKindWrapper| {
+                let system = System::new_with_specifics(kind.0);
+                lua.create_any_userdata(system)
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_battery_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
+fn push_battery_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
     let battery_table = lua.create_table()?;
     battery_table.set(
         "is_on_ac",
@@ -225,11 +225,13 @@ fn add_battery_api(lua: &Lua, sysinfo_table: &LuaTable) -> LuaResult<()> {
     Ok(())
 }
 
-pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
+pub fn push_api(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
     let sysinfo_table = lua.create_table()?;
 
-    add_system_api(lua, &sysinfo_table)?;
-    add_battery_api(lua, &sysinfo_table)?;
+    System::push_lua(lua, &sysinfo_table)?;
+    push_battery_api(lua, &sysinfo_table)?;
 
-    Ok(sysinfo_table)
+    table.set("sysinfo", sysinfo_table)?;
+
+    Ok(())
 }

@@ -33,7 +33,8 @@ local WorkerReceiver = {
     -- Propagates any error that was generated.
     -- Returns false,nil if no data is available
     ---@param self WorkerReceiver
-    ---@return boolean,WorkerData?
+    ---@return boolean
+    ---@return WorkerData?
     try_recv = function(self) end
 }
 
@@ -49,8 +50,10 @@ worker.Worker = {
     ---@return boolean
     dead = function(self) end,
 
-    -- Waits for worker termination. Propagates any error that was generated
+    -- Waits for worker termination, returning immediately if it's dead.
+    -- Returns all collected data in a table. Propagates any error that was generated.
     ---@param self Worker
+    ---@return WorkerData[]?
     join = function(self) end,
 
     ---@param self Worker

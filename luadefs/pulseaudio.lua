@@ -91,7 +91,7 @@ pulseaudio.Context = {
     connect = function(self, server) end,
 
     ---@param self Context
-    ---@param callback fun()
+    ---@param callback? fun():nil
     set_state_callback = function(self, callback) end,
 
     ---@param self Context
@@ -104,7 +104,7 @@ pulseaudio.Context = {
     subscribe = function(self, mask, callback) end,
 
     ---@param self Context
-    ---@param callback fun(facility: Facility, op: Operation, index: integer)
+    ---@param callback? fun(facility: Facility, op: Operation, index: integer)
     set_subscribe_callback = function(self, callback) end,
 
     ---@param self Context

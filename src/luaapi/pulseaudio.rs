@@ -1,14 +1,21 @@
 use gtk::glib::MainContext;
 use mlua::{prelude::*, IntoLua};
-use pulse::volume::ChannelVolumes;
+use pulse::{
+    callbacks::ListResult,
+    context::Context,
+    volume::{ChannelVolumes, Volume},
+};
+use pulse_glib::Mainloop;
 
-use crate::utils::catch_lua_errors;
+use crate::{traits::LuaApi, utils::catch_lua_errors};
 
 use super::wrappers::InterestMaskSetWrapper;
 
 macro_rules! push_enum {
-    ($tbl:ident, $name:ty, [$($variant:ident),+]) => {
-        $($tbl.set(stringify!($variant), <$name>::$variant as i32)?;)+
+    ($lua:ident, $tbl:ident, $lua_name:expr, $name:ty, [$($variant:ident),+]) => {
+        let enum_table = $lua.create_table()?;
+        $(enum_table.set(stringify!($variant), <$name>::$variant as i32)?;)+
+        $tbl.set($lua_name, enum_table)?;
     };
 }
 
@@ -24,7 +31,7 @@ macro_rules! copy_field_wrapped {
     };
 }
 
-struct VolumeWrapper(pulse::volume::Volume);
+struct VolumeWrapper(Volume);
 impl<'lua> IntoLua<'lua> for VolumeWrapper {
     fn into_lua(self, _: &'lua Lua) -> LuaResult<LuaValue<'lua>> {
         Ok(LuaValue::Integer(self.0 .0 as i64))
@@ -36,7 +43,7 @@ impl<'lua> IntoLua<'lua> for ChannelVolumesWrapper {
     fn into_lua(self, lua: &'lua Lua) -> LuaResult<LuaValue<'lua>> {
         let table = lua.create_table_with_capacity(self.0.len() as usize, 0)?;
         for (idx, volume) in self.0.get().iter().enumerate() {
-            table.set(idx + 1, volume.0 as i64)?;
+            table.set(idx + 1, volume.0)?;
         }
 
         Ok(LuaValue::Table(table))
@@ -56,7 +63,7 @@ impl<'lua> FromLua<'lua> for ChannelVolumesWrapper {
                 .enumerate()
             {
                 let value = value?;
-                volume_slice[key] = pulse::volume::Volume(value);
+                volume_slice[key] = Volume(value);
             }
 
             Ok(Self(volume))
@@ -99,10 +106,11 @@ impl<'lua, 'a> IntoLua<'lua> for ServerInfoWrapper<'a> {
     }
 }
 
-fn add_enums(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
-    let state = lua.create_table()?;
+fn push_enums(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
     push_enum!(
-        state,
+        lua,
+        pulseaudio_table,
+        "State",
         pulse::context::State,
         [
             Unconnected,
@@ -114,11 +122,11 @@ fn add_enums(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
             Terminated
         ]
     );
-    pulseaudio_table.set("State", state)?;
 
-    let facility = lua.create_table()?;
     push_enum!(
-        facility,
+        lua,
+        pulseaudio_table,
+        "Facility",
         pulse::context::subscribe::Facility,
         [
             Sink,
@@ -132,50 +140,48 @@ fn add_enums(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
             Card
         ]
     );
-    pulseaudio_table.set("Facility", facility)?;
 
-    let operation = lua.create_table()?;
     push_enum!(
-        operation,
+        lua,
+        pulseaudio_table,
+        "Operation",
         pulse::context::subscribe::Operation,
         [New, Changed, Removed]
     );
-    pulseaudio_table.set("Operation", operation)?;
 
     Ok(())
 }
 
-fn add_mainloop_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
-    let mainloop = lua.create_table()?;
-    mainloop.set(
-        "new",
-        lua.create_function(|lua, mut ctx: Option<LuaUserDataRefMut<MainContext>>| {
-            let mainloop = pulse_glib::Mainloop::new(ctx.as_deref_mut());
-            if let Some(mainloop) = mainloop {
-                Ok(Some(lua.create_any_userdata(mainloop)?))
-            } else {
-                Ok(None)
-            }
-        })?,
-    )?;
-    pulseaudio_table.set("Mainloop", mainloop)?;
+impl LuaApi for Mainloop {
+    const CLASS_NAME: &'static str = "Mainloop";
 
-    Ok(())
+    fn register_methods(_reg: &mut LuaUserDataRegistry<Self>) {}
+
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, mut ctx: Option<LuaUserDataRefMut<MainContext>>| {
+                let mainloop = Mainloop::new(ctx.as_deref_mut());
+                if let Some(mainloop) = mainloop {
+                    Ok(Some(lua.create_any_userdata(mainloop)?))
+                } else {
+                    Ok(None)
+                }
+            })?,
+        )?;
+
+        Ok(())
+    }
 }
 
-fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
-    let volume = lua.create_table()?;
-    volume.set("NORMAL", pulse::volume::Volume::NORMAL.0)?;
-    volume.set("MUTED", pulse::volume::Volume::MUTED.0)?;
-    volume.set("MAX", pulse::volume::Volume::MAX.0)?;
-    volume.set("INVALID", pulse::volume::Volume::INVALID.0)?;
-    pulseaudio_table.set("Volume", volume)?;
+impl LuaApi for Context {
+    const CLASS_NAME: &'static str = "Context";
 
-    lua.register_userdata_type::<pulse::context::Context>(|reg| {
-        reg.add_meta_method(LuaMetaMethod::ToString, |lua, this, ()| {
-            lua.create_string(format!("Context {{ state = {:?} }}", this.get_state()))
-        });
+    fn to_lua_string<'a>(&self, lua: &'a Lua) -> LuaResult<LuaString<'a>> {
+        lua.create_string(format!("Context {{ state = {:?} }}", self.get_state()))
+    }
 
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method_mut("connect", |_, this, server: Option<String>| {
             let server = server.as_deref();
             this.connect(server, pulse::context::FlagSet::NOAUTOSPAWN, None)
@@ -184,13 +190,20 @@ fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
             Ok(())
         });
 
-        reg.add_method_mut("set_state_callback", |_, this, f: LuaOwnedFunction| {
-            this.set_state_callback(Some(Box::new(move || {
-                catch_lua_errors::<_, ()>(f.to_ref(), ());
-            })));
+        reg.add_method_mut(
+            "set_state_callback",
+            |_, this, f: Option<LuaOwnedFunction>| {
+                if let Some(f) = f {
+                    this.set_state_callback(Some(Box::new(move || {
+                        catch_lua_errors::<_, ()>(f.to_ref(), ());
+                    })));
+                } else {
+                    this.set_state_callback(None);
+                }
 
-            Ok(())
-        });
+                Ok(())
+            },
+        );
 
         reg.add_method("get_state", |_, this, ()| {
             let state = this.get_state();
@@ -208,15 +221,24 @@ fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
             },
         );
 
-        reg.add_method_mut("set_subscribe_callback", |_, this, f: LuaOwnedFunction| {
-            this.set_subscribe_callback(Some(Box::new(move |facility, operation, index| {
-                let facility = facility.map(|value| value as i32);
-                let operation = operation.map(|value| value as i32);
-                catch_lua_errors::<_, ()>(f.to_ref(), (facility, operation, index));
-            })));
+        reg.add_method_mut(
+            "set_subscribe_callback",
+            |_, this, f: Option<LuaOwnedFunction>| {
+                if let Some(f) = f {
+                    this.set_subscribe_callback(Some(Box::new(
+                        move |facility, operation, index| {
+                            let facility = facility.map(|value| value as i32);
+                            let operation = operation.map(|value| value as i32);
+                            catch_lua_errors::<_, ()>(f.to_ref(), (facility, operation, index));
+                        },
+                    )));
+                } else {
+                    this.set_subscribe_callback(None);
+                }
 
-            Ok(())
-        });
+                Ok(())
+            },
+        );
 
         reg.add_method("get_server_info", |_, this, f: LuaOwnedFunction| {
             this.introspect().get_server_info(move |result| {
@@ -231,7 +253,7 @@ fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
             |_, this, (index, f): (i64, LuaOwnedFunction)| {
                 this.introspect()
                     .get_sink_info_by_index(index as u32, move |result| {
-                        if let pulse::callbacks::ListResult::Item(item) = result {
+                        if let ListResult::Item(item) = result {
                             catch_lua_errors::<_, ()>(f.to_ref(), SinkInfoWrapper(item));
                         }
                     });
@@ -245,7 +267,7 @@ fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
             |_, this, (name, f): (String, LuaOwnedFunction)| {
                 this.introspect()
                     .get_sink_info_by_name(&name, move |result| {
-                        if let pulse::callbacks::ListResult::Item(item) = result {
+                        if let ListResult::Item(item) = result {
                             catch_lua_errors::<_, ()>(f.to_ref(), SinkInfoWrapper(item));
                         }
                     });
@@ -291,32 +313,47 @@ fn add_context_api(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
                 Ok(())
             },
         );
-    })?;
-    let context = lua.create_table()?;
-    context.set(
-        "new",
-        lua.create_function(
-            |lua, (mainloop, name): (LuaUserDataRef<pulse_glib::Mainloop>, String)| {
-                let ctx = pulse::context::Context::new(&*mainloop, &name);
-                if let Some(ctx) = ctx {
-                    Ok(Some(lua.create_any_userdata(ctx)?))
-                } else {
-                    Ok(None)
-                }
-            },
-        )?,
-    )?;
-    pulseaudio_table.set("Context", context)?;
+    }
+
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(
+                |lua, (mainloop, name): (LuaUserDataRef<Mainloop>, String)| {
+                    let ctx = Context::new(&*mainloop, &name);
+                    if let Some(ctx) = ctx {
+                        Ok(Some(lua.create_any_userdata(ctx)?))
+                    } else {
+                        Ok(None)
+                    }
+                },
+            )?,
+        )?;
+
+        Ok(())
+    }
+}
+
+fn push_volume_constants(lua: &Lua, pulseaudio_table: &LuaTable) -> LuaResult<()> {
+    let volume = lua.create_table()?;
+    volume.set("NORMAL", Volume::NORMAL.0)?;
+    volume.set("MUTED", Volume::MUTED.0)?;
+    volume.set("MAX", Volume::MAX.0)?;
+    volume.set("INVALID", Volume::INVALID.0)?;
+    pulseaudio_table.set("Volume", volume)?;
 
     Ok(())
 }
 
-pub fn add_api(lua: &Lua) -> LuaResult<LuaTable> {
+pub fn push_api(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
     let pulseaudio_table = lua.create_table()?;
 
-    add_enums(lua, &pulseaudio_table)?;
-    add_mainloop_api(lua, &pulseaudio_table)?;
-    add_context_api(lua, &pulseaudio_table)?;
+    push_enums(lua, &pulseaudio_table)?;
+    push_volume_constants(lua, &pulseaudio_table)?;
+    Mainloop::push_lua(lua, &pulseaudio_table)?;
+    Context::push_lua(lua, &pulseaudio_table)?;
 
-    Ok(pulseaudio_table)
+    table.set("pulseaudio", pulseaudio_table)?;
+
+    Ok(())
 }

@@ -58,11 +58,11 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1691414788,
-        "narHash": "sha256-Le1EMQwqJvPsNVs7DTZ16rACP0+TXqCPlMUWvUaE9VA=",
+        "lastModified": 1693835639,
+        "narHash": "sha256-AC7Uzioszw8mw3+pUNw5F0J1N16EV3Ymv8EOSad1Fmk=",
         "ref": "refs/heads/main",
-        "rev": "943d420c9dc2dd6704ec5a123a2cea4a07a6f55c",
-        "revCount": 581,
+        "rev": "fa7d5376b88b04ae88ceb5034631d14c9176d48b",
+        "revCount": 593,
         "type": "git",
         "url": "file:3rdparty/gtk4-layer-shell"
       },
@@ -168,11 +168,11 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1689068808,
-        "narHash": "sha256-6ixXo3wt24N/melDWjq70UuHQLxGV8jZvooRanIHXw0=",
+        "lastModified": 1692799911,
+        "narHash": "sha256-3eihraek4qL744EvQXsK1Ha6C3CR7nnT8X2qWap4RNk=",
         "owner": "numtide",
         "repo": "flake-utils",
-        "rev": "919d646de7be200f3bf08cb76ae1f09402b6f9b4",
+        "rev": "f9e7cf818399d17d347f847525c5a5a8032e4e44",
         "type": "github"
       },
       "original": {
