@@ -15,7 +15,7 @@ use super::{
     enums,
     wrappers::{
         ApplicationFlagsWrapper, ContextWrapper, EventControllerScrollFlagsWrapper, GStringWrapper,
-        ModifierTypeWrapper,
+        ModifierTypeWrapper, RGBAWrapper,
     },
 };
 use crate::utils::{catch_lua_errors, catch_lua_errors_async};
@@ -104,6 +104,26 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
         Ok(())
     });
 
+    reg.add_method("set_margin_bottom", |_, this, margin: i32| {
+        this.set_margin_bottom(margin);
+        Ok(())
+    });
+
+    reg.add_method("set_margin_end", |_, this, margin: i32| {
+        this.set_margin_end(margin);
+        Ok(())
+    });
+
+    reg.add_method("set_margin_start", |_, this, margin: i32| {
+        this.set_margin_start(margin);
+        Ok(())
+    });
+
+    reg.add_method("set_margin_top", |_, this, margin: i32| {
+        this.set_margin_top(margin);
+        Ok(())
+    });
+
     reg.add_method(
         "set_size_request",
         |_, this, (width, height): (i32, i32)| {
@@ -123,6 +143,13 @@ fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'
         let settings = this.settings();
         lua.create_any_userdata(settings)
     });
+
+    reg.add_method("color", |_, this, ()| Ok(RGBAWrapper(this.color())));
+
+    reg.add_method("margin_bottom", |_, this, ()| Ok(this.margin_bottom()));
+    reg.add_method("margin_end", |_, this, ()| Ok(this.margin_end()));
+    reg.add_method("margin_start", |_, this, ()| Ok(this.margin_start()));
+    reg.add_method("margin_top", |_, this, ()| Ok(this.margin_top()));
 
     reg.add_method("allocated_width", |_, this, ()| Ok(this.allocated_width()));
     reg.add_method(

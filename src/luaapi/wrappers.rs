@@ -1,6 +1,6 @@
 use gtk::{
     cairo::Context,
-    gdk::ModifierType,
+    gdk::{ModifierType, RGBA},
     gio::{ApplicationFlags, SubprocessFlags},
     glib::GString,
     EventControllerScrollFlags,
@@ -71,6 +71,38 @@ pub struct ContextWrapper(pub Context);
 impl<'lua> IntoLua<'lua> for ContextWrapper {
     fn into_lua(self, lua: &'lua Lua) -> LuaResult<LuaValue<'lua>> {
         Ok(LuaValue::UserData(lua.create_any_userdata(self.0)?))
+    }
+}
+
+pub struct RGBAWrapper(pub RGBA);
+impl<'lua> FromLua<'lua> for RGBAWrapper {
+    fn from_lua(value: LuaValue<'lua>, _: &'lua Lua) -> LuaResult<Self> {
+        if let LuaValue::Table(table) = value {
+            let red = table.get::<_, Option<f32>>("r")?.unwrap_or(0.0);
+            let green = table.get::<_, Option<f32>>("g")?.unwrap_or(0.0);
+            let blue = table.get::<_, Option<f32>>("b")?.unwrap_or(0.0);
+            let alpha = table.get::<_, Option<f32>>("a")?.unwrap_or(1.0);
+
+            Ok(RGBAWrapper(RGBA::new(red, green, blue, alpha)))
+        } else {
+            Err(LuaError::FromLuaConversionError {
+                from: value.type_name(),
+                to: "GdkRGBA",
+                message: None,
+            })
+        }
+    }
+}
+
+impl<'lua> IntoLua<'lua> for RGBAWrapper {
+    fn into_lua(self, lua: &'lua Lua) -> LuaResult<LuaValue<'lua>> {
+        let table = lua.create_table_with_capacity(0, 4)?;
+        table.set("r", self.0.red())?;
+        table.set("g", self.0.green())?;
+        table.set("b", self.0.blue())?;
+        table.set("a", self.0.alpha())?;
+
+        Ok(LuaValue::Table(table))
     }
 }
 

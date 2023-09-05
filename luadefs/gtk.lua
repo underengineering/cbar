@@ -208,6 +208,22 @@ local WidgetImpl           = {
     set_hexpand = function(self, expand) end,
 
     ---@param self WidgetImpl
+    ---@param margin integer
+    set_margin_bottom = function(self, margin) end,
+
+    ---@param self WidgetImpl
+    ---@param margin integer
+    set_margin_end = function(self, margin) end,
+
+    ---@param self WidgetImpl
+    ---@param margin integer
+    set_margin_start = function(self, margin) end,
+
+    ---@param self WidgetImpl
+    ---@param margin integer
+    set_margin_top = function(self, margin) end,
+
+    ---@param self WidgetImpl
     ---@param width integer
     ---@param height integer
     set_size_request = function(self, width, height) end,
@@ -221,6 +237,26 @@ local WidgetImpl           = {
     ---@param self WidgetImpl
     ---@return Settings
     settings = function(self) end,
+
+    ---@param self WidgetImpl
+    ---@return RGBA
+    color = function(self) end,
+
+    ---@param self WidgetImpl
+    ---@return number
+    margin_bottom = function(self) end,
+
+    ---@param self WidgetImpl
+    ---@return number
+    margin_end = function(self) end,
+
+    ---@param self WidgetImpl
+    ---@return number
+    margin_start = function(self) end,
+
+    ---@param self WidgetImpl
+    ---@return number
+    margin_top = function(self) end,
 
     ---@param self WidgetImpl
     ---@return integer
