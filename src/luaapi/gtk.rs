@@ -1601,6 +1601,7 @@ pub fn push_api(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
     Box::push_lua(lua, &gtk_table)?;
     Grid::push_lua(lua, &gtk_table)?;
     CenterBox::push_lua(lua, &gtk_table)?;
+    gtk::cairo::Context::push_lua(lua, &gtk_table)?;
     DrawingArea::push_lua(lua, &gtk_table)?;
     Image::push_lua(lua, &gtk_table)?;
     Scale::push_lua(lua, &gtk_table)?;
