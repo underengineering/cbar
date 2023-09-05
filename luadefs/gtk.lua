@@ -537,6 +537,10 @@ gtk.CairoContext           = {
     set_source_rgba = function(self, red, green, blue, alpha) end,
 
     ---@param self CairoContext
+    ---@param width number
+    set_line_width = function(self, width) end,
+
+    ---@param self CairoContext
     ---@param x number
     ---@param y number
     move_to = function(self, x, y) end,
@@ -622,6 +626,10 @@ gtk.CairoContext           = {
 
     ---@param self CairoContext
     clip = function(self) end,
+
+    ---@param self CairoContext
+    ---@return number
+    line_width = function(self) end,
 
     ---@param self CairoContext
     paint = function(self) end,

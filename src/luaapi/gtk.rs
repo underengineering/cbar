@@ -847,6 +847,11 @@ impl LuaApi for gtk::cairo::Context {
             },
         );
 
+        reg.add_method("set_line_width", |_, this, width: f64| {
+            this.set_line_width(width);
+            Ok(())
+        });
+
         reg.add_method("move_to", |_, this, (x, y): (f64, f64)| {
             this.move_to(x, y);
             Ok(())
@@ -941,6 +946,8 @@ impl LuaApi for gtk::cairo::Context {
             this.clip();
             Ok(())
         });
+
+        reg.add_method("line_width", |_, this, ()| Ok(this.line_width()));
 
         reg.add_method("paint", |_, this, ()| this.paint().into_lua_err());
         reg.add_method("paint_with_alpha", |_, this, alpha: f64| {
