@@ -5,8 +5,8 @@ use gtk::{
     pango,
     prelude::*,
     Application, ApplicationWindow, Box, Button, CenterBox, CheckButton, CssProvider, DrawingArea,
-    Entry, EventControllerFocus, EventControllerKey, EventControllerMotion, EventControllerScroll,
-    Grid, Image, Label, Overlay, Revealer, Scale, Settings, ToggleButton,
+    Entry, EntryBuffer, EventControllerFocus, EventControllerKey, EventControllerMotion,
+    EventControllerScroll, Grid, Image, Label, Overlay, Revealer, Scale, Settings, ToggleButton,
 };
 use mlua::prelude::*;
 use paste::paste;
@@ -1687,6 +1687,7 @@ pub fn push_api(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
     Overlay::push_lua(lua, &gtk_table)?;
     Label::push_lua(lua, &gtk_table)?;
     Entry::push_lua(lua, &gtk_table)?;
+    EntryBuffer::push_lua(lua, &gtk_table)?;
     Button::push_lua(lua, &gtk_table)?;
     ToggleButton::push_lua(lua, &gtk_table)?;
     CheckButton::push_lua(lua, &gtk_table)?;
