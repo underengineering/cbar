@@ -10,6 +10,9 @@ use std::{
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BatteryInfo {
     pub capacity: i32,
+    pub full: f64,
+    pub now: f64,
+    pub current: f64,
     pub remaining_time: Duration,
     pub status: String,
 }
@@ -149,6 +152,9 @@ pub fn get_batteries() -> Batteries {
             BatteryInfo {
                 capacity,
                 remaining_time,
+                full,
+                now,
+                current,
                 status,
             },
         );

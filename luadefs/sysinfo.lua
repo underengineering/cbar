@@ -148,6 +148,9 @@ sysinfo.System = {
 
 ---@class BatteryInfo
 ---@field capacity integer
+---@field full number
+---@field now number
+---@field current number
 ---@field remaining_time Duration
 ---@field status string
 
