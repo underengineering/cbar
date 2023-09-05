@@ -6,7 +6,7 @@ use gtk::{
     prelude::*,
     Application, ApplicationWindow, Box, Button, CenterBox, CheckButton, CssProvider, DrawingArea,
     Entry, EventControllerFocus, EventControllerKey, EventControllerMotion, EventControllerScroll,
-    Grid, Image, Label, Overlay, Revealer, Scale, Settings,
+    Grid, Image, Label, Overlay, Revealer, Scale, Settings, ToggleButton,
 };
 use mlua::prelude::*;
 use paste::paste;
@@ -381,6 +381,63 @@ impl LuaApi for Button {
             "with_label",
             lua.create_function(|lua, label: String| {
                 let button = Button::with_label(&label);
+                lua.create_any_userdata(button)
+            })?,
+        )?;
+
+        Ok(())
+    }
+}
+
+impl LuaApi for ToggleButton {
+    const CLASS_NAME: &'static str = "ToggleButton";
+
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
+        register_signals!(reg, [clicked, toggled]);
+
+        reg.add_method("set_label", |_, this, label: String| {
+            this.set_label(&label);
+            Ok(())
+        });
+
+        reg.add_method(
+            "set_child",
+            |_, this, child: Option<LuaUserDataRef<gtk::Widget>>| {
+                this.set_child(child.as_deref());
+                Ok(())
+            },
+        );
+
+        reg.add_method("set_active", |_, this, is_active: bool| {
+            this.set_active(is_active);
+            Ok(())
+        });
+
+        reg.add_method("is_active", |_, this, ()| Ok(this.is_active()));
+
+        reg.add_method(
+            "set_group",
+            |_, this, group: Option<LuaUserDataRef<ToggleButton>>| {
+                this.set_group(group.as_deref());
+                Ok(())
+            },
+        );
+
+        add_widget_methods(reg);
+    }
+
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new",
+            lua.create_function(|lua, ()| {
+                let button = ToggleButton::new();
+                lua.create_any_userdata(button)
+            })?,
+        )?;
+        table.set(
+            "with_label",
+            lua.create_function(|lua, label: String| {
+                let button = ToggleButton::with_label(&label);
                 lua.create_any_userdata(button)
             })?,
         )?;
@@ -1631,6 +1688,7 @@ pub fn push_api(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
     Label::push_lua(lua, &gtk_table)?;
     Entry::push_lua(lua, &gtk_table)?;
     Button::push_lua(lua, &gtk_table)?;
+    ToggleButton::push_lua(lua, &gtk_table)?;
     CheckButton::push_lua(lua, &gtk_table)?;
     Box::push_lua(lua, &gtk_table)?;
     Grid::push_lua(lua, &gtk_table)?;

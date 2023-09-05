@@ -386,6 +386,32 @@ gtk.Button                 = {
     set_child = function(self, child) end
 }
 
+---@class ToggleButton : Button
+gtk.ToggleButton           = {
+    ---@return ToggleButton
+    new = function() end,
+
+    ---@param label string
+    ---@return ToggleButton
+    with_label = function(label) end,
+
+    ---@param self ToggleButton
+    ---@param callback fun():nil
+    connect_toggled = function(self, callback) end,
+
+    ---@param self ToggleButton
+    ---@param is_active boolean
+    set_active = function(self, is_active) end,
+
+    ---@param self ToggleButton
+    ---@return boolean
+    is_active = function(self) end,
+
+    ---@param self ToggleButton
+    ---@param group ToggleButton?
+    set_group = function(self, group) end,
+}
+
 ---@class CheckButton : WidgetImpl
 gtk.CheckButton            = {
     ---@return CheckButton
