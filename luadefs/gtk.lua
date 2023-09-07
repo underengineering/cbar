@@ -825,7 +825,7 @@ gtk.Revealer               = {
     new = function() end,
 
     ---@param self Revealer
-    ---@param child Widget
+    ---@param child? Widget
     set_child = function(self, child) end,
 
     ---@param self Revealer
