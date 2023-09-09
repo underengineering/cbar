@@ -35,3 +35,4 @@ sysinfo = "0.29.8"
 thiserror = "1.0.47"
 tokio = { version = "1.32.0", features = ["sync"] }
 crossbeam = { version = "0.8.2", features = ["crossbeam-channel"] }
+regex = "1.9.5"
