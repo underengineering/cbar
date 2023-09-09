@@ -20,7 +20,7 @@ use crate::{
 struct Args {
     /// Path to the lua file to execute.
     /// A default config path will be prepended if it's relative
-    /// Defaults to $HOME/.config/cbar/main.lua
+    /// Defaults to $HOME/.config/crabshell/main.lua
     #[arg(short, long)]
     config: Option<PathBuf>,
     /// Values to pass to lua script
@@ -35,7 +35,7 @@ fn main() -> Result<(), Error> {
             if path.is_relative() {
                 let mut abs_path =
                     PathBuf::from(env::var("HOME").expect("Failed to get the HOME variable"));
-                abs_path.push(".config/cbar");
+                abs_path.push(".config/crabshell");
                 abs_path.push(path);
 
                 abs_path
@@ -46,7 +46,7 @@ fn main() -> Result<(), Error> {
         .unwrap_or_else(|| {
             let mut path =
                 PathBuf::from(env::var("HOME").expect("Failed to get the HOME variable"));
-            path.push(".config/cbar/main.lua");
+            path.push(".config/crabshell/main.lua");
             path
         });
 

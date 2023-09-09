@@ -32,7 +32,7 @@
     gtk4-layer-shell,
     ...
   }: let
-    name = "cbar";
+    name = "crabshell";
   in
     utils.lib.eachDefaultSystem
     (
