@@ -181,31 +181,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cbar"
-version = "0.10.3"
-dependencies = [
- "chrono",
- "clap",
- "crossbeam",
- "freedesktop-icons",
- "futures",
- "grass",
- "gtk4",
- "gtk4-layer-shell",
- "libpulse-binding",
- "libpulse-glib-binding",
- "mlua",
- "mlua-sys",
- "paste",
- "regex",
- "serde",
- "serde_json",
- "sysinfo",
- "thiserror",
- "tokio",
-]
-
-[[package]]
 name = "cc"
 version = "1.0.83"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -303,6 +278,31 @@ name = "core-foundation-sys"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e496a50fda8aacccc86d7529e2c1e0892dbd0f898a6b5645b5561b89c3210efa"
+
+[[package]]
+name = "crabshell"
+version = "0.10.3"
+dependencies = [
+ "chrono",
+ "clap",
+ "crossbeam",
+ "freedesktop-icons",
+ "futures",
+ "grass",
+ "gtk4",
+ "gtk4-layer-shell",
+ "libpulse-binding",
+ "libpulse-glib-binding",
+ "mlua",
+ "mlua-sys",
+ "paste",
+ "regex",
+ "serde",
+ "serde_json",
+ "sysinfo",
+ "thiserror",
+ "tokio",
+]
 
 [[package]]
 name = "crossbeam"
