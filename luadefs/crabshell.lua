@@ -3,6 +3,7 @@ crabshell = {}
 
 ---@module 'gdk.lua'
 ---@module 'gio.lua'
+---@module 'glib.lua'
 ---@module 'gtk.lua'
 ---@module 'hyprland.lua'
 ---@module 'pulseaudio.lua'

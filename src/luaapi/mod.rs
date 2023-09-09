@@ -1,5 +1,6 @@
 mod enums;
 pub mod gio;
+pub mod glib;
 pub mod gtk;
 pub mod hyprland;
 mod json;

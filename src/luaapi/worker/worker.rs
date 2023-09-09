@@ -7,7 +7,7 @@ use std::sync::{
 
 use super::error::Error;
 use crate::{
-    luaapi::{gio, gtk, hyprland, pulseaudio, sysinfo, utf8, utils},
+    luaapi::{gio, glib, gtk, hyprland, pulseaudio, sysinfo, utf8, utils},
     traits::{LuaApi, LuaExt},
 };
 
@@ -199,13 +199,14 @@ impl Worker {
     ) -> LuaResult<()> {
         let globals = lua.globals();
         let crabshell_table = lua.create_table()?;
-        gtk::push_api(lua, &crabshell_table)?;
         gio::push_api(lua, &crabshell_table)?;
-        utils::push_api(lua, &crabshell_table)?;
+        glib::push_api(lua, &crabshell_table)?;
+        gtk::push_api(lua, &crabshell_table)?;
         hyprland::push_api(lua, &crabshell_table)?;
-        sysinfo::push_api(lua, &crabshell_table)?;
         pulseaudio::push_api(lua, &crabshell_table)?;
+        sysinfo::push_api(lua, &crabshell_table)?;
         utf8::push_api(lua, &crabshell_table)?;
+        utils::push_api(lua, &crabshell_table)?;
 
         let worker_table = lua.create_table()?;
         Self::add_channels_api(lua, &worker_table)?;

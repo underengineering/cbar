@@ -63,13 +63,14 @@ fn main() -> Result<(), Error> {
 
     let globals = lua.globals();
     let crabshell_table = lua.create_table()?;
-    luaapi::gtk::push_api(&lua, &crabshell_table)?;
     luaapi::gio::push_api(&lua, &crabshell_table)?;
-    luaapi::utils::push_api(&lua, &crabshell_table)?;
+    luaapi::glib::push_api(&lua, &crabshell_table)?;
+    luaapi::gtk::push_api(&lua, &crabshell_table)?;
     luaapi::hyprland::push_api(&lua, &crabshell_table)?;
-    luaapi::sysinfo::push_api(&lua, &crabshell_table)?;
     luaapi::pulseaudio::push_api(&lua, &crabshell_table)?;
+    luaapi::sysinfo::push_api(&lua, &crabshell_table)?;
     luaapi::utf8::push_api(&lua, &crabshell_table)?;
+    luaapi::utils::push_api(&lua, &crabshell_table)?;
     luaapi::worker::push_api(&lua, &crabshell_table)?;
     globals.set("crabshell", crabshell_table)?;
 
