@@ -39,7 +39,7 @@ local utils = {
 ---@field is_empty boolean
 ---@field str string
 
----@alias RegexCaptures table<number | string, RegexMatch?>
+---@alias RegexCaptures table<integer | string, RegexMatch?>
 
 ---@class Regex
 utils.Regex = {
