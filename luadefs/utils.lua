@@ -33,6 +33,48 @@ utils = {
     print_table = function(tbl, seen, depth) end
 }
 
+---@class RegexMatch
+---@field start_index integer
+---@field end_index integer
+---@field is_empty boolean
+---@field str string
+
+---@alias RegexCaptures table<number | string, RegexMatch?>
+
+---@class Regex
+utils.Regex = {
+    -- Syntax: https://docs.rs/regex/latest/regex/#syntax
+    ---@param re string
+    ---@return Regex
+    new = function(re) end,
+
+    ---@param self Regex
+    ---@param haystack string
+    ---@param start_index? integer
+    ---@return boolean
+    is_match = function(self, haystack, start_index) end,
+
+    ---@param self Regex
+    ---@param haystack string
+    ---@param start_index? integer
+    ---@return RegexMatch?
+    find = function(self, haystack, start_index) end,
+
+    ---@param self Regex
+    ---@param haystack string
+    ---@param start_index? integer
+    ---@return RegexCaptures?
+    captures = function(self, haystack, start_index) end,
+
+    -- String interpolation syntax:
+    -- https://docs.rs/regex/latest/regex/struct.Regex.html#replacement-string-syntax
+    ---@param self Regex
+    ---@param haystack string
+    ---@param rep string|fun(caps: RegexCaptures):string
+    ---@return string
+    replace_all = function(self, haystack, rep) end,
+}
+
 utils.json = {
     ---@param tbl table
     ---@return string
