@@ -1,3 +1,6 @@
+---@diagnostic disable-next-line: lowercase-global
+crabshell = {}
+
 ---@module 'gdk.lua'
 ---@module 'gio.lua'
 ---@module 'gtk.lua'

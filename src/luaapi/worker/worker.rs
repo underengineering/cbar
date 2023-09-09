@@ -198,19 +198,21 @@ impl Worker {
         receiver: Receiver<WorkerData>,
     ) -> LuaResult<()> {
         let globals = lua.globals();
-        gtk::push_api(lua, &globals)?;
-        gio::push_api(lua, &globals)?;
-        utils::push_api(lua, &globals)?;
-        hyprland::push_api(lua, &globals)?;
-        sysinfo::push_api(lua, &globals)?;
-        pulseaudio::push_api(lua, &globals)?;
-        utf8::push_api(lua, &globals)?;
+        let crabshell_table = lua.create_table()?;
+        gtk::push_api(lua, &crabshell_table)?;
+        gio::push_api(lua, &crabshell_table)?;
+        utils::push_api(lua, &crabshell_table)?;
+        hyprland::push_api(lua, &crabshell_table)?;
+        sysinfo::push_api(lua, &crabshell_table)?;
+        pulseaudio::push_api(lua, &crabshell_table)?;
+        utf8::push_api(lua, &crabshell_table)?;
 
         let worker_table = lua.create_table()?;
         Self::add_channels_api(lua, &worker_table)?;
         worker_table.set("sender", lua.create_any_userdata(sender)?)?;
         worker_table.set("receiver", lua.create_any_userdata(receiver)?)?;
-        globals.set("worker", worker_table)?;
+        crabshell_table.set("worker", worker_table)?;
+        globals.set("crabshell", crabshell_table)?;
 
         Ok(())
     }

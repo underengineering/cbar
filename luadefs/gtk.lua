@@ -1,7 +1,7 @@
 ---@diagnostic disable:missing-return
 ---@diagnostic disable:lowercase-global
 ---@diagnostic disable:unused-local
-gtk                        = {}
+local gtk                  = {}
 
 ---@enum Orientation
 gtk.Orientation            = {
@@ -1051,3 +1051,5 @@ function gtk.layer_shell.set_keyboard_mode(window, mode) end
 ---@param window ApplicationWindow
 ---@param namespace string
 function gtk.layer_shell.set_namespace(window, namespace) end
+
+crabshell.gtk = gtk

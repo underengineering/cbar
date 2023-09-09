@@ -9,7 +9,7 @@
 ---@field cache boolean?
 ---@field force_svg boolean?
 
-utils = {
+local utils = {
     ---@param path string
     ---@return string
     scss_from_path = function(path) end,
@@ -88,3 +88,5 @@ utils.json = {
     ---@return table
     from_str = function(str) end,
 }
+
+crabshell.utils = utils

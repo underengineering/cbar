@@ -2,7 +2,7 @@
 ---@diagnostic disable:lowercase-global
 ---@diagnostic disable:unused-local
 
-worker = {}
+local worker = {}
 
 ---@type WorkerSenderSlave?
 worker.sender = nil
@@ -101,3 +101,5 @@ worker.Worker = {
     ---@return WorkerReceiverMaster
     receiver = function(self) end,
 }
+
+crabshell.worker = worker

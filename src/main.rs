@@ -62,14 +62,16 @@ fn main() -> Result<(), Error> {
     lua.load_from_std_lib(LuaStdLib::ALL)?;
 
     let globals = lua.globals();
-    luaapi::gtk::push_api(&lua, &globals)?;
-    luaapi::gio::push_api(&lua, &globals)?;
-    luaapi::utils::push_api(&lua, &globals)?;
-    luaapi::hyprland::push_api(&lua, &globals)?;
-    luaapi::sysinfo::push_api(&lua, &globals)?;
-    luaapi::pulseaudio::push_api(&lua, &globals)?;
-    luaapi::utf8::push_api(&lua, &globals)?;
-    luaapi::worker::push_api(&lua, &globals)?;
+    let crabshell_table = lua.create_table()?;
+    luaapi::gtk::push_api(&lua, &crabshell_table)?;
+    luaapi::gio::push_api(&lua, &crabshell_table)?;
+    luaapi::utils::push_api(&lua, &crabshell_table)?;
+    luaapi::hyprland::push_api(&lua, &crabshell_table)?;
+    luaapi::sysinfo::push_api(&lua, &crabshell_table)?;
+    luaapi::pulseaudio::push_api(&lua, &crabshell_table)?;
+    luaapi::utf8::push_api(&lua, &crabshell_table)?;
+    luaapi::worker::push_api(&lua, &crabshell_table)?;
+    globals.set("crabshell", crabshell_table)?;
 
     // Set current directory to the config path
     env::set_current_dir(

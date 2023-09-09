@@ -1,7 +1,7 @@
 ---@diagnostic disable:missing-return
 ---@diagnostic disable:lowercase-global
 ---@diagnostic disable:unused-local
-gio = {}
+local gio = {}
 
 ---@class InputStreamAsyncBufRead
 local InputStreamAsyncBufRead = {
@@ -264,3 +264,5 @@ gio.AppInfo = {
     ---@return boolean
     can_delete = function(self) end,
 }
+
+crabshell.gio = gio

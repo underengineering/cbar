@@ -4,7 +4,7 @@
 
 ---@module 'gtk.lua'
 
-pulseaudio = {}
+local pulseaudio = {}
 
 ---@enum State
 pulseaudio.State = {
@@ -133,3 +133,5 @@ pulseaudio.Context = {
     ---@param callback? fun(success: boolean):nil
     set_sink_volume_by_index = function(self, index, volume, callback) end
 }
+
+crabshell.pulseaudio = pulseaudio

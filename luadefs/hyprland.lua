@@ -1,7 +1,7 @@
 ---@diagnostic disable:missing-return
 ---@diagnostic disable:lowercase-global
 ---@diagnostic disable:unused-local
-hyprland = {}
+local hyprland = {}
 
 ---@alias CommandName `workspaces` | `devices` | `activewindow`
 
@@ -181,3 +181,5 @@ hyprland.EventLoop = {
     ---@param self EventLoop
     run = function(self) end
 }
+
+crabshell.hyprland = hyprland

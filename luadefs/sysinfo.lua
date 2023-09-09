@@ -1,7 +1,7 @@
 ---@diagnostic disable:missing-return
 ---@diagnostic disable:lowercase-global
 ---@diagnostic disable:unused-local
-sysinfo = {}
+local sysinfo = {}
 
 ---@class CpuRefreshKind
 ---@field frequency boolean?
@@ -166,3 +166,5 @@ sysinfo.battery = {
     ---@return Batteries
     get_batteries = function() end
 }
+
+crabshell.sysinfo = sysinfo
