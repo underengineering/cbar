@@ -122,7 +122,7 @@ fn push_other_api(lua: &Lua, utils_table: &LuaTable) -> LuaResult<()> {
                 if vtype == "table" and not seen[v] then
                     io.write(("\t"):rep(depth + 1))
                     io.write(("[%s] =\n"):format(k_formatted))
-                    utils.print_table(v, seen, depth + 1)
+                    crabshell.utils.print_table(v, seen, depth + 1)
                     io.write(",\n")
                     goto continue
                 elseif vtype == "string" then
