@@ -81,6 +81,13 @@ fn main() -> Result<(), Error> {
             .expect("Failed to get config parent directory"),
     )?;
 
+    // Add config path to the package.path
+    lua.load(format!(
+        r#"package.path = package.path .. ';{}/?.lua'"#,
+        config_path.parent().unwrap().to_str().unwrap()
+    ))
+    .exec()?;
+
     let config = fs::read_to_string(&config_path)?;
     let file_name = config_path.file_name().unwrap().to_str().unwrap();
 
