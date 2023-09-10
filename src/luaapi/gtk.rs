@@ -711,13 +711,8 @@ impl LuaApi for Box {
         });
 
         reg.add_method("remove_all", |_, this, ()| {
-            let mut child_opt = this.first_child();
-            while let Some(child) = child_opt {
+            while let Some(child) = this.first_child() {
                 this.remove(&child);
-                child_opt = child.next_sibling();
-                if child_opt.is_none() {
-                    break;
-                }
             }
 
             Ok(())
