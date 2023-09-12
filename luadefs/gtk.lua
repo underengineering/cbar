@@ -114,6 +114,16 @@ local WidgetImpl           = {
     upcast = function(self) end,
 
     ---@param self WidgetImpl
+    ---@param property_name string
+    ---@param value Value
+    set_property = function(self, property_name, value) end,
+
+    ---@param self WidgetImpl
+    ---@param property_name string
+    ---@return Value
+    property = function(self, property_name) end,
+
+    ---@param self WidgetImpl
     ---@param controller EventController
     add_controller = function(self, controller) end,
 

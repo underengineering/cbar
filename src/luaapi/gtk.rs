@@ -1,8 +1,12 @@
 use gtk::{
-    cairo, gio::Icon, glib, pango, prelude::*, Application, ApplicationWindow, Box, Button,
-    CenterBox, CheckButton, CssProvider, DrawingArea, Entry, EntryBuffer, EventControllerFocus,
-    EventControllerKey, EventControllerMotion, EventControllerScroll, Grid, Image, Label, Overlay,
-    Revealer, Scale, Settings, ToggleButton,
+    cairo,
+    gio::Icon,
+    glib::{self, Value},
+    pango,
+    prelude::*,
+    Application, ApplicationWindow, Box, Button, CenterBox, CheckButton, CssProvider, DrawingArea,
+    Entry, EntryBuffer, EventControllerFocus, EventControllerKey, EventControllerMotion,
+    EventControllerScroll, Grid, Image, Label, Overlay, Revealer, Scale, Settings, ToggleButton,
 };
 use mlua::prelude::*;
 use paste::paste;
@@ -27,6 +31,18 @@ macro_rules! push_enum {
 fn add_widget_methods<T: glib::IsA<gtk::Widget>>(reg: &mut LuaUserDataRegistry<'_, T>) {
     reg.add_method("upcast", |lua, this, ()| {
         lua.create_any_userdata(this.clone().upcast::<gtk::Widget>())
+    });
+
+    reg.add_method(
+        "set_property",
+        |_, this, (property_name, value): (String, LuaUserDataRef<Value>)| {
+            this.set_property_from_value(&property_name, &value);
+            Ok(())
+        },
+    );
+
+    reg.add_method("property", |lua, this, property_name: String| {
+        lua.create_any_userdata(this.property_value(&property_name))
     });
 
     reg.add_method(

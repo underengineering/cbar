@@ -1,5 +1,6 @@
-use gtk::glib::{self, MainContext};
+use gtk::glib::{self, Bytes, MainContext, Value};
 use mlua::prelude::*;
+use paste::paste;
 
 use crate::{traits::LuaApi, utils::catch_lua_errors_async};
 
@@ -19,6 +20,105 @@ fn push_constants(lua: &Lua, glib_table: &LuaTable) -> LuaResult<()> {
     glib_table.set("Priority", priority)?;
 
     Ok(())
+}
+
+impl LuaApi for Value {
+    const CLASS_NAME: &'static str = "Value";
+
+    fn to_lua_string<'a>(&self, lua: &'a Lua) -> LuaResult<LuaString<'a>> {
+        lua.create_string(format!("Value {:?}", self))
+    }
+
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
+        reg.add_method("type_name", |lua, this, ()| {
+            lua.create_string(this.type_().name())
+        });
+
+        reg.add_method("as_str", |lua, this, ()| {
+            Ok(if let Ok(str) = this.get::<&str>() {
+                Some(lua.create_string(str)?)
+            } else {
+                None
+            })
+        });
+
+        reg.add_method("as_str_vec", |lua, this, ()| {
+            Ok(if let Ok(vec) = this.get::<Vec<String>>() {
+                let table = lua.create_table_with_capacity(vec.len(), 0)?;
+                for (idx, str) in vec.iter().enumerate() {
+                    table.set(idx + 1, lua.create_string(str)?)?;
+                }
+
+                Some(table)
+            } else {
+                None
+            })
+        });
+
+        reg.add_method("as_bytes", |lua, this, ()| {
+            Ok(if let Ok(bytes) = this.get::<Bytes>() {
+                Some(lua.create_string(bytes)?)
+            } else {
+                None
+            })
+        });
+
+        macro_rules! add_conversions {
+            ($reg:ident, [$($typ:ty),+]) => {
+                $(
+                    $reg.add_method(paste!(stringify!([<as_ $typ>])), |_, this, ()| {
+                        Ok(if let Ok(value) = this.get::<$typ>() {
+                            Some(value)
+                        } else {
+                            None
+                        })
+                    });
+                )+
+            };
+        }
+
+        add_conversions!(reg, [bool, f64, f32, i64, i32, i8, u64, u32, u8]);
+    }
+
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "new_str",
+            lua.create_function(|lua, str: String| lua.create_any_userdata(Value::from(str)))?,
+        )?;
+
+        table.set(
+            "new_str_vec",
+            lua.create_function(|lua, table: LuaTable| {
+                let vec = table
+                    .sequence_values::<String>()
+                    .collect::<LuaResult<Vec<_>>>()?;
+                lua.create_any_userdata(Value::from(vec))
+            })?,
+        )?;
+
+        table.set(
+            "new_bytes",
+            lua.create_function(|lua, str: LuaString| {
+                let bytes = Bytes::from(str.as_bytes());
+                lua.create_any_userdata(Value::from(bytes))
+            })?,
+        )?;
+
+        macro_rules! add_conversions {
+            ($table:ident, [$($typ:ty),+]) => {
+                $(
+                    $table.set(
+                        paste!(stringify!([<new_ $typ>])),
+                        lua.create_function(|lua, value: $typ| lua.create_any_userdata(Value::from(value)))?,
+                    )?;
+                )+
+            };
+        }
+
+        add_conversions!(table, [bool, f64, f32, i64, i32, i8, u64, u32, u8]);
+
+        Ok(())
+    }
 }
 
 impl LuaApi for MainContext {
@@ -77,6 +177,7 @@ pub fn push_api(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
     let glib_table = lua.create_table()?;
 
     push_constants(lua, &glib_table)?;
+    Value::push_lua(lua, &glib_table)?;
     MainContext::push_lua(lua, &glib_table)?;
 
     table.set("glib", glib_table)?;
