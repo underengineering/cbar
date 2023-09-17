@@ -109,37 +109,37 @@
                   // buildEnvVars;
                 mlua-sys = oldAttrs: {
                   buildInputs = [pkgs.luajit];
-                  nativeBuildInputs = [pkgs.pkgconfig];
+                  nativeBuildInputs = [pkgs.pkg-config];
                 };
                 gobject-sys = oldAttrs: {
                   buildInputs = [pkgs.gtk4];
-                  nativeBuildInputs = [pkgs.pkgconfig];
+                  nativeBuildInputs = [pkgs.pkg-config];
                 };
                 gio-sys = oldAttrs: {
                   buildInputs = [pkgs.gtk4];
-                  nativeBuildInputs = [pkgs.pkgconfig];
+                  nativeBuildInputs = [pkgs.pkg-config];
                 };
                 gdk-pixbuf-sys = oldAttrs: {
                   buildInputs = [pkgs.gtk4];
-                  nativeBuildInputs = [pkgs.pkgconfig];
+                  nativeBuildInputs = [pkgs.pkg-config];
                 };
                 gtk4-layer-shell-sys = oldAttrs: {
                   buildInputs = [
                     gtk4-layer-shell.defaultPackage.${system}
                   ];
-                  nativeBuildInputs = [pkgs.pkgconfig];
+                  nativeBuildInputs = [pkgs.pkg-config];
                 };
                 libpulse-sys = oldAttrs: {
                   buildInputs = [
                     pkgs.libpulseaudio
                   ];
-                  nativeBuildInputs = [pkgs.pkgconfig];
+                  nativeBuildInputs = [pkgs.pkg-config];
                 };
                 libpulse-mainloop-glib-sys = oldAttrs: {
                   buildInputs = [
                     pkgs.libpulseaudio
                   ];
-                  nativeBuildInputs = [pkgs.pkgconfig];
+                  nativeBuildInputs = [pkgs.pkg-config];
                 };
               };
           };
@@ -158,7 +158,7 @@
           clang_15
           gtk4-layer-shell.defaultPackage.${system}
           mold'
-          pkgconfig
+          pkg-config
         ];
         buildEnvVars = {
           PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
