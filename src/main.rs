@@ -101,6 +101,7 @@ fn main() -> Result<(), Error> {
 
     let globals = lua.globals();
     let crabshell_table = lua.create_table()?;
+    luaapi::gdk::push_api(&lua, &crabshell_table)?;
     luaapi::gio::push_api(&lua, &crabshell_table)?;
     luaapi::glib::push_api(&lua, &crabshell_table)?;
     luaapi::gtk::push_api(&lua, &crabshell_table)?;

@@ -1,3 +1,4 @@
+use ::gtk::gdk::Texture;
 use crossbeam::channel::{self, Receiver, Sender, TryRecvError, TrySendError};
 use mlua::prelude::*;
 use std::sync::{
@@ -7,7 +8,7 @@ use std::sync::{
 
 use super::error::Error;
 use crate::{
-    luaapi::{gio, glib, gtk, hyprland, pulseaudio, sysinfo, utf8, utils},
+    luaapi::{gdk, gio, glib, gtk, hyprland, pulseaudio, sysinfo, utf8, utils},
     traits::{LuaApi, LuaExt},
 };
 
@@ -18,6 +19,8 @@ pub enum WorkerData {
     Integer(i64),
     String(String),
     Array(Vec<WorkerData>),
+
+    Texture(Texture),
 }
 
 impl<'lua> IntoLua<'lua> for WorkerData {
@@ -36,6 +39,7 @@ impl<'lua> IntoLua<'lua> for WorkerData {
 
                 LuaValue::Table(result)
             }
+            Self::Texture(texture) => LuaValue::UserData(lua.create_any_userdata(texture)?),
         })
     }
 }
@@ -77,11 +81,17 @@ impl<'lua> FromLua<'lua> for WorkerData {
                 to: "WorkerData",
                 message: None,
             }),
-            LuaValue::UserData(_) => Err(LuaError::FromLuaConversionError {
-                from: "userdata",
-                to: "WorkerData",
-                message: None,
-            }),
+            LuaValue::UserData(ud) => {
+                if let Ok(texture) = ud.take::<Texture>() {
+                    Ok(Self::Texture(texture))
+                } else {
+                    Err(LuaError::FromLuaConversionError {
+                        from: "userdata",
+                        to: "WorkerData",
+                        message: None,
+                    })
+                }
+            }
         }
     }
 }
@@ -199,6 +209,7 @@ impl Worker {
     ) -> LuaResult<()> {
         let globals = lua.globals();
         let crabshell_table = lua.create_table()?;
+        gdk::push_api(lua, &crabshell_table)?;
         gio::push_api(lua, &crabshell_table)?;
         glib::push_api(lua, &crabshell_table)?;
         gtk::push_api(lua, &crabshell_table)?;

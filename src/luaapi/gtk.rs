@@ -1,5 +1,5 @@
 use gtk::{
-    cairo,
+    cairo, gdk,
     gio::Icon,
     glib::{self, Value},
     pango,
@@ -1076,6 +1076,14 @@ impl LuaApi for Image {
             Ok(())
         });
 
+        reg.add_method(
+            "set_from_paintable",
+            |_, this, texture: Option<LuaUserDataRef<gdk::Texture>>| {
+                this.set_from_paintable(texture.as_deref());
+                Ok(())
+            },
+        );
+
         reg.add_method("clear", |_, this, ()| {
             this.clear();
             Ok(())
@@ -1110,6 +1118,13 @@ impl LuaApi for Image {
             "from_gicon",
             lua.create_function(|lua, icon: LuaUserDataRef<Icon>| {
                 let image = Image::from_gicon(&*icon);
+                lua.create_any_userdata(image)
+            })?,
+        )?;
+        table.set(
+            "from_texture",
+            lua.create_function(|lua, texture: Option<LuaUserDataRef<gdk::Texture>>| {
+                let image = Image::from_paintable(texture.as_deref());
                 lua.create_any_userdata(image)
             })?,
         )?;

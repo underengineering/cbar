@@ -10,4 +10,15 @@ local gdk = {}
 ---@field b number?
 ---@field a number?
 
+---@class Texture
+gdk.Texture = {
+    ---@param data string
+    ---@return Texture
+    from_bytes = function(data) end,
+
+    ---@param path string
+    ---@return Texture
+    from_filename = function(path) end,
+}
+
 crabshell.gdk = gdk

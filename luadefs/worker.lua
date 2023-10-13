@@ -10,7 +10,7 @@ worker.sender = nil
 ---@type WorkerSenderSlave?
 worker.receiver = nil
 
----@alias WorkerData nil | boolean | integer | number | string | WorkerData[]
+---@alias WorkerData nil | boolean | integer | number | string | Texture | WorkerData[]
 
 ---@class WorkerSenderMaster
 local WorkerSenderMaster = {

@@ -1,4 +1,5 @@
 mod enums;
+pub mod gdk;
 pub mod gio;
 pub mod glib;
 pub mod gtk;

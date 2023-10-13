@@ -688,6 +688,10 @@ gtk.Image                  = {
     ---@return Image
     from_gicon = function(icon) end,
 
+    ---@param texture Texture
+    ---@return Image
+    from_paintable = function(texture) end,
+
     ---@param self Image
     ---@param pixel_size integer
     set_pixel_size = function(self, pixel_size) end,
@@ -703,6 +707,10 @@ gtk.Image                  = {
     ---@param self Image
     ---@param icon Icon
     set_from_gicon = function(self, icon) end,
+
+    ---@param self Image
+    ---@param texture Texture
+    set_from_paintable = function(self, texture) end,
 
     ---@param self Image
     clear = function(self) end
