@@ -199,6 +199,20 @@ gio.File = {
     replace = function(self) end,
 }
 
+---@class ThemedIcon
+gio.ThemedIcon = {
+    ---@param self ThemedIcon
+    ---@return string[]
+    names = function(self) end
+}
+
+---@class Icon
+gio.Icon = {
+    ---@param self Icon
+    ---@return ThemedIcon
+    as_themed = function(self) end
+}
+
 ---@class AppInfoMonitor
 gio.AppInfoMonitor = {
     ---@return AppInfoMonitor

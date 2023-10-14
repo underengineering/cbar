@@ -2,11 +2,11 @@ use futures::{AsyncBufReadExt, AsyncReadExt};
 use gtk::{
     gdk::AppLaunchContext,
     gio::{
-        prelude::*, AppInfo, AppInfoMonitor, File, FileCreateFlags, InputStream,
-        InputStreamAsyncBufRead, OutputStream, SocketClient, SocketConnection, Subprocess,
-        UnixSocketAddress,
+        prelude::*, AppInfo, AppInfoMonitor, File, FileCreateFlags, FileIcon, Icon, InputStream,
+        InputStreamAsyncBufRead, LoadableIcon, OutputStream, SocketClient, SocketConnection,
+        Subprocess, ThemedIcon, UnixSocketAddress,
     },
-    glib::{Bytes, PRIORITY_DEFAULT},
+    glib::{Bytes, GString, PRIORITY_DEFAULT},
 };
 use mlua::prelude::*;
 use paste::paste;
@@ -314,6 +314,37 @@ impl LuaApi for File {
     }
 }
 
+impl LuaApi for Icon {
+    const CLASS_NAME: &'static str = "Icon";
+
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
+        reg.add_method("as_themed", |lua, this, ()| {
+            Ok(
+                if let Ok(themed_icon) = this.clone().downcast::<ThemedIcon>() {
+                    Some(lua.create_any_userdata(themed_icon)?)
+                } else {
+                    None
+                },
+            )
+        });
+    }
+}
+
+impl LuaApi for ThemedIcon {
+    const CLASS_NAME: &'static str = "ThemedIcon";
+
+    fn to_lua_string<'a>(&self, lua: &'a Lua) -> LuaResult<LuaString<'a>> {
+        lua.create_string(format!("ThemedIcon {{ names = {:?} }}", self.names()))
+    }
+
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
+        reg.add_method("names", |lua, this, ()| {
+            let names = this.names();
+            lua.create_sequence_from(names.iter().map(GString::as_str))
+        })
+    }
+}
+
 impl LuaApi for AppInfoMonitor {
     const CLASS_NAME: &'static str = "AppInfoMonitor";
 
@@ -425,6 +456,8 @@ pub fn push_api(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
     SocketConnection::push_lua(lua, &gio_table)?;
     SocketClient::push_lua(lua, &gio_table)?;
     File::push_lua(lua, &gio_table)?;
+    Icon::push_lua(lua, &gio_table)?;
+    ThemedIcon::push_lua(lua, &gio_table)?;
     AppInfoMonitor::push_lua(lua, &gio_table)?;
     AppInfo::push_lua(lua, &gio_table)?;
     table.set("gio", gio_table)?;
