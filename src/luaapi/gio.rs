@@ -2,9 +2,9 @@ use futures::{AsyncBufReadExt, AsyncReadExt};
 use gtk::{
     gdk::AppLaunchContext,
     gio::{
-        prelude::*, AppInfo, AppInfoMonitor, File, FileCreateFlags, FileIcon, Icon, InputStream,
-        InputStreamAsyncBufRead, LoadableIcon, OutputStream, SocketClient, SocketConnection,
-        Subprocess, ThemedIcon, UnixSocketAddress,
+        prelude::*, AppInfo, AppInfoMonitor, File, FileCreateFlags, Icon, InputStream,
+        InputStreamAsyncBufRead, OutputStream, SocketClient, SocketConnection, Subprocess,
+        ThemedIcon, UnixSocketAddress,
     },
     glib::{Bytes, GString, PRIORITY_DEFAULT},
 };
