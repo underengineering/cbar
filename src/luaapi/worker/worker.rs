@@ -1,5 +1,5 @@
 use ::gtk::gdk::Texture;
-use crossbeam::channel::{self, Receiver, Sender, TryRecvError, TrySendError};
+use crossfire::mpmc::{self, RxFuture, SharedFutureBoth, TryRecvError, TrySendError, TxFuture};
 use mlua::prelude::*;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -96,14 +96,21 @@ impl<'lua> FromLua<'lua> for WorkerData {
     }
 }
 
+pub type Sender<T> = TxFuture<T, SharedFutureBoth>;
+pub type Receiver<T> = RxFuture<T, SharedFutureBoth>;
 impl LuaApi for Sender<WorkerEvent> {
     const CLASS_NAME: &'static str = "Sender<WorkerEvent>";
     const CONSTRUCTIBLE: bool = false;
 
     fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
-        reg.add_method("send", |lua, this, data: LuaValue| {
+        reg.add_async_method("send", |lua, this, data: LuaValue| async {
             let data = WorkerEvent::UserData(WorkerData::from_lua(data, lua)?);
-            this.send(data).into_lua_err()
+            this.send(data).await.into_lua_err()
+        });
+
+        reg.add_method("send_blocking", |lua, this, data: LuaValue| {
+            let data = WorkerEvent::UserData(WorkerData::from_lua(data, lua)?);
+            this.send_blocking(data).into_lua_err()
         });
 
         reg.add_method("try_send", |lua, this, data: LuaValue| {
@@ -122,7 +129,13 @@ impl LuaApi for Receiver<WorkerData> {
     const CONSTRUCTIBLE: bool = false;
 
     fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
-        reg.add_method("recv", |_, this, ()| this.recv().into_lua_err());
+        reg.add_async_method("recv", |_, this, ()| async {
+            this.recv().await.into_lua_err()
+        });
+
+        reg.add_method("recv_blocking", |_, this, ()| {
+            this.recv_blocking().into_lua_err()
+        });
 
         reg.add_method("try_recv", |lua, this, ()| {
             Ok(match this.try_recv() {
@@ -149,11 +162,15 @@ pub struct Worker {
 }
 
 impl Worker {
-    pub fn start(code: String, name: Option<String>) -> Result<Self, Error> {
+    pub fn start(
+        code: String,
+        name: Option<String>,
+        channel_size: Option<usize>,
+    ) -> Result<Self, Error> {
         // worker -> main
-        let (tx_, rx) = channel::unbounded();
+        let (tx_, rx) = mpmc::bounded_future_both(channel_size.unwrap_or(32));
         // main -> worker
-        let (tx, rx_) = channel::unbounded();
+        let (tx, rx_) = mpmc::bounded_future_both(channel_size.unwrap_or(32));
 
         let dead = Arc::new(AtomicBool::new(false));
         let dead_ref = dead.clone();
@@ -168,8 +185,8 @@ impl Worker {
                 .set_name(name.as_deref().unwrap_or("worker"))
                 .exec()
             {
-                Ok(_) => tx_.send(WorkerEvent::Done),
-                Err(err) => tx_.send(WorkerEvent::Error(err)),
+                Ok(_) => tx_.send_blocking(WorkerEvent::Done),
+                Err(err) => tx_.send_blocking(WorkerEvent::Error(err)),
             }
             .unwrap();
 
