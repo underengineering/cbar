@@ -1,4 +1,4 @@
-use gtk::{gdk::Texture, glib::Bytes};
+use gtk::{gdk::Texture, gio::File, glib::Bytes};
 use mlua::prelude::*;
 
 use crate::traits::LuaApi;
@@ -13,6 +13,13 @@ impl LuaApi for Texture {
             "from_bytes",
             lua.create_function(|lua, data: LuaString| {
                 let texture = Texture::from_bytes(&Bytes::from(data.as_bytes())).into_lua_err()?;
+                lua.create_any_userdata(texture)
+            })?,
+        )?;
+        table.set(
+            "from_file",
+            lua.create_function(|lua, file: LuaUserDataRef<File>| {
+                let texture = Texture::from_file(&*file).into_lua_err()?;
                 lua.create_any_userdata(texture)
             })?,
         )?;

@@ -1,12 +1,13 @@
 use gtk::{
     cairo, gdk,
     gio::Icon,
-    glib::{self, Value},
+    glib::{self, GString, Value},
     pango,
     prelude::*,
     Application, ApplicationWindow, Box, Button, CenterBox, CheckButton, CssProvider, DrawingArea,
     Entry, EntryBuffer, EventControllerFocus, EventControllerKey, EventControllerMotion,
-    EventControllerScroll, Grid, Image, Label, Overlay, Revealer, Scale, Settings, ToggleButton,
+    EventControllerScroll, Grid, IconLookupFlags, IconPaintable, IconTheme, Image, Label, Overlay,
+    Revealer, Scale, Settings, ToggleButton,
 };
 use mlua::prelude::*;
 use paste::paste;
@@ -1438,6 +1439,119 @@ impl LuaApi for EventControllerFocus {
     }
 }
 
+impl LuaApi for IconPaintable {
+    const CLASS_NAME: &'static str = "IconPaintable";
+
+    fn to_lua_string<'a>(&self, lua: &'a Lua) -> LuaResult<LuaString<'a>> {
+        lua.create_string(format!("IconPaintable {{ name = {:?} }}", self.icon_name()))
+    }
+
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
+        reg.add_method("file", |lua, this, ()| {
+            Ok(if let Some(file) = this.file() {
+                Some(lua.create_any_userdata(file)?)
+            } else {
+                None
+            })
+        });
+
+        reg.add_method("icon_name", |lua, this, ()| {
+            Ok(if let Some(icon_name) = this.icon_name() {
+                if let Some(icon_name_str) = icon_name.into_os_string().to_str() {
+                    Some(lua.create_string(icon_name_str)?)
+                } else {
+                    None
+                }
+            } else {
+                None
+            })
+        });
+
+        reg.add_method("is_symbolic", |_, this, ()| Ok(this.is_symbolic()));
+    }
+
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "for_file",
+            lua.create_function(
+                |lua, (file, size, scale): (LuaUserDataRef<gtk::gio::File>, i32, i32)| {
+                    let icon_paintable = IconPaintable::for_file(&*file, size, scale);
+                    lua.create_any_userdata(icon_paintable)
+                },
+            )?,
+        )?;
+
+        Ok(())
+    }
+}
+
+impl LuaApi for IconTheme {
+    const CLASS_NAME: &'static str = "IconTheme";
+
+    fn to_lua_string<'a>(&self, lua: &'a Lua) -> LuaResult<LuaString<'a>> {
+        lua.create_string(format!("IconTheme {{ name = {:?} }}", self.theme_name()))
+    }
+
+    fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
+        reg.add_method("set_theme_name", |_, this, theme_name: Option<String>| {
+            this.set_theme_name(theme_name.as_deref());
+            Ok(())
+        });
+
+        reg.add_method("theme_name", |lua, this, ()| {
+            lua.create_string(this.theme_name().as_str())
+        });
+
+        reg.add_method("has_icon", |_, this, icon_name: String| {
+            Ok(this.has_icon(&icon_name))
+        });
+
+        reg.add_method("icon_names", |lua, this, ()| {
+            lua.create_sequence_from(this.icon_names().iter().map(GString::as_str))
+        });
+
+        reg.add_method("resource_path", |lua, this, ()| {
+            lua.create_sequence_from(this.resource_path().iter().map(GString::as_str))
+        });
+
+        reg.add_method("search_path", |lua, this, ()| {
+            lua.create_sequence_from(
+                this.search_path()
+                    .into_iter()
+                    .map(|path| path.into_os_string().to_string_lossy().into_owned()),
+            )
+        });
+
+        reg.add_method(
+            "lookup_icon",
+            |lua, this, (icon_name, fallbacks, size, scale): (String, Vec<String>, i32, i32)| {
+                let icon_paintable = this.lookup_icon(
+                    &icon_name,
+                    &fallbacks.iter().map(String::as_str).collect::<Vec<_>>(),
+                    size,
+                    scale,
+                    gtk::TextDirection::Ltr,
+                    IconLookupFlags::empty(),
+                );
+
+                lua.create_any_userdata(icon_paintable)
+            },
+        );
+    }
+
+    fn register_static_methods(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
+        table.set(
+            "default",
+            lua.create_function(|lua, ()| {
+                let icon_theme = IconTheme::default();
+                lua.create_any_userdata(icon_theme)
+            })?,
+        )?;
+
+        Ok(())
+    }
+}
+
 impl LuaApi for Settings {
     const CLASS_NAME: &'static str = "Settings";
     const CONSTRUCTIBLE: bool = false;
@@ -1653,6 +1767,8 @@ pub fn push_api(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
     EventControllerScroll::push_lua(lua, &gtk_table)?;
     EventControllerMotion::push_lua(lua, &gtk_table)?;
     EventControllerFocus::push_lua(lua, &gtk_table)?;
+    IconPaintable::push_lua(lua, &gtk_table)?;
+    IconTheme::push_lua(lua, &gtk_table)?;
     Settings::push_lua(lua, &gtk_table)?;
     CssProvider::push_lua(lua, &gtk_table)?;
     push_layer_shell_api(lua, &gtk_table)?;
