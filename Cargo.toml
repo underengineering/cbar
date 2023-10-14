@@ -35,4 +35,4 @@ sysinfo = "0.29.8"
 thiserror = "1.0.47"
 tokio = { version = "1.32.0", features = ["sync"] }
 regex = "1.9.5"
-crossfire = "1.0.1"
+async-channel = "1.9.0"

@@ -1,4 +1,4 @@
-use crossfire::mpmc::{TryRecvError, TrySendError};
+use async_channel::{Receiver, Sender, TryRecvError, TrySendError};
 use mlua::prelude::*;
 
 mod error;
@@ -8,7 +8,7 @@ mod worker;
 
 use crate::traits::LuaApi;
 
-use self::worker::{Receiver, Sender, Worker, WorkerData, WorkerEvent};
+use self::worker::{Worker, WorkerData, WorkerEvent};
 
 impl LuaApi for Sender<WorkerData> {
     const CLASS_NAME: &'static str = "Sender<WorkerData>";
@@ -63,7 +63,7 @@ impl LuaApi for Receiver<WorkerEvent> {
                     WorkerEvent::UserData(value) => {
                         LuaMultiValue::from_vec(vec![LuaValue::Boolean(true), value.into_lua(lua)?])
                     }
-                    WorkerEvent::Done => Err(TryRecvError::Disconnected).into_lua_err()?,
+                    WorkerEvent::Done => Err(TryRecvError::Closed).into_lua_err()?,
                     WorkerEvent::Error(err) => Err(err)?,
                 },
                 Err(TryRecvError::Empty) => LuaMultiValue::from_vec(vec![LuaValue::Boolean(false)]),
@@ -79,7 +79,7 @@ impl LuaApi for Worker {
     fn register_methods(reg: &mut LuaUserDataRegistry<Self>) {
         reg.add_method("dead", |_, this, ()| Ok(this.dead()));
 
-        reg.add_async_method("join", |lua, this, ()| async {
+        reg.add_async_method_mut("join", |lua, this, ()| async {
             if this.dead() {
                 // Prevent deadlocking
                 Ok(LuaValue::Nil)
@@ -98,7 +98,7 @@ impl LuaApi for Worker {
             }
         });
 
-        reg.add_method("join_blocking", |lua, this, ()| {
+        reg.add_method_mut("join_blocking", |lua, this, ()| {
             if this.dead() {
                 // Prevent deadlocking
                 Ok(LuaValue::Nil)
@@ -117,11 +117,11 @@ impl LuaApi for Worker {
             }
         });
 
-        reg.add_method("sender", |lua, this, ()| {
+        reg.add_method_mut("sender", |lua, this, ()| {
             lua.create_any_userdata(this.sender())
         });
 
-        reg.add_method("receiver", |lua, this, ()| {
+        reg.add_method_mut("receiver", |lua, this, ()| {
             lua.create_any_userdata(this.receiver())
         });
     }

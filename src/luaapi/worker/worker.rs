@@ -1,5 +1,5 @@
 use ::gtk::gdk::Texture;
-use crossfire::mpmc::{self, RxFuture, SharedFutureBoth, TryRecvError, TrySendError, TxFuture};
+use async_channel::{Receiver, Sender, TryRecvError, TrySendError};
 use mlua::prelude::*;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -96,8 +96,6 @@ impl<'lua> FromLua<'lua> for WorkerData {
     }
 }
 
-pub type Sender<T> = TxFuture<T, SharedFutureBoth>;
-pub type Receiver<T> = RxFuture<T, SharedFutureBoth>;
 impl LuaApi for Sender<WorkerEvent> {
     const CLASS_NAME: &'static str = "Sender<WorkerEvent>";
     const CONSTRUCTIBLE: bool = false;
@@ -168,9 +166,9 @@ impl Worker {
         channel_size: Option<usize>,
     ) -> Result<Self, Error> {
         // worker -> main
-        let (tx_, rx) = mpmc::bounded_future_both(channel_size.unwrap_or(32));
+        let (tx_, rx) = async_channel::bounded(channel_size.unwrap_or(32));
         // main -> worker
-        let (tx, rx_) = mpmc::bounded_future_both(channel_size.unwrap_or(32));
+        let (tx, rx_) = async_channel::bounded(channel_size.unwrap_or(32));
 
         let dead = Arc::new(AtomicBool::new(false));
         let dead_ref = dead.clone();
@@ -204,11 +202,11 @@ impl Worker {
         self.dead.load(Ordering::Relaxed)
     }
 
-    pub fn sender(&self) -> Sender<WorkerData> {
+    pub fn sender(&mut self) -> Sender<WorkerData> {
         self.sender.clone()
     }
 
-    pub fn receiver(&self) -> Receiver<WorkerEvent> {
+    pub fn receiver(&mut self) -> Receiver<WorkerEvent> {
         self.receiver.clone()
     }
 
