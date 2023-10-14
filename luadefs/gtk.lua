@@ -924,6 +924,64 @@ gtk.EventControllerFocus   = {
     connect_leave = function(self, callback) end,
 }
 
+---@class IconPaintable
+gtk.IconPaintable          = {
+    ---@param file File
+    ---@return IconPaintable
+    for_file = function(file) end,
+
+    ---@param self IconPaintable
+    ---@return File
+    file = function(self) end,
+
+    ---@param self IconPaintable
+    ---@return string
+    icon_name = function(self) end,
+
+    ---@param self IconPaintable
+    ---@return boolean
+    is_symbolic = function(self) end,
+}
+
+---@class IconTheme
+gtk.IconTheme              = {
+    ---@return IconTheme
+    default = function() end,
+
+    ---@param self IconTheme
+    ---@param theme_name string
+    set_theme_name = function(self, theme_name) end,
+
+    ---@param self IconTheme
+    ---@return string
+    theme_name = function(self) end,
+
+    ---@param self IconTheme
+    ---@param icon_name string
+    ---@return boolean
+    has_icon = function(self, icon_name) end,
+
+    ---@param self IconTheme
+    ---@return string[]
+    icon_names = function(self) end,
+
+    ---@param self IconTheme
+    ---@return string[]
+    resource_path = function(self) end,
+
+    ---@param self IconTheme
+    ---@return string[]
+    search_path = function(self) end,
+
+    ---@param self IconTheme
+    ---@param icon_name string
+    ---@param fallbacks string[]
+    ---@param size integer
+    ---@param scale integer
+    ---@return IconPaintable
+    lookup_icon = function(self, icon_name, fallbacks, size, scale) end,
+}
+
 ---@class Settings
 gtk.Settings               = {
     ---@param self Settings
