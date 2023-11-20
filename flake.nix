@@ -18,10 +18,6 @@
       url = "github:edolstra/flake-compat";
       flake = false;
     };
-    gtk4-layer-shell = {
-      url = "git+file:3rdparty/gtk4-layer-shell";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
   outputs = {
     self,
@@ -29,7 +25,6 @@
     utils,
     rust-overlay,
     crate2nix,
-    gtk4-layer-shell,
     ...
   }: let
     name = "crabshell";
@@ -125,7 +120,7 @@
                 };
                 gtk4-layer-shell-sys = oldAttrs: {
                   buildInputs = [
-                    gtk4-layer-shell.defaultPackage.${system}
+                    pkgs.gtk4-layer-shell
                   ];
                   nativeBuildInputs = [pkgs.pkg-config];
                 };
@@ -156,7 +151,7 @@
           cargoNixPkgs.cargo
           cargoNixPkgs.rustc
           clang_15
-          gtk4-layer-shell.defaultPackage.${system}
+          gtk4-layer-shell
           mold'
           pkg-config
         ];
