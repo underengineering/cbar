@@ -262,7 +262,8 @@ fn add_global_functions(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
             gtk::style_context_add_provider_for_display(
                 &gtk::gdk::Display::default().expect("Could not connect to the display"),
                 &*provider,
-                gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
+                // TODO: Styles get overrided by theme when priority is APPLICATION
+                gtk::STYLE_PROVIDER_PRIORITY_USER,
             );
 
             Ok(())
