@@ -17,14 +17,7 @@ pub fn push_api(lua: &Lua, table: &LuaTable) -> LuaResult<()> {
             } else {
                 let begin = indices.nth(begin - 1).map_or(str.len(), |x| x.0);
                 let end = indices.nth(end - begin).map_or(str.len(), |x| x.0);
-
-                let slice = if cfg!(debug_assertions) {
-                    &str[begin..end]
-                } else {
-                    unsafe { str.get_unchecked(begin..end) }
-                };
-
-                lua.create_string(slice)
+                lua.create_string(&str[begin..end])
             }
         })?,
     )?;
