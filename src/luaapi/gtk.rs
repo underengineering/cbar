@@ -9,6 +9,7 @@ use gtk::{
     EventControllerScroll, Grid, IconLookupFlags, IconPaintable, IconTheme, Image, Label, Overlay,
     Revealer, Scale, Settings, ToggleButton,
 };
+use gtk4_layer_shell::LayerShell;
 use mlua::prelude::*;
 use paste::paste;
 
@@ -1299,7 +1300,11 @@ impl LuaApi for EventControllerKey {
                     .call::<_, Option<bool>>((key_name, keycode, state))
                     .unwrap();
 
-                gtk::Inhibit(result.unwrap_or(false))
+                if result.unwrap_or(false) {
+                    glib::Propagation::Stop
+                } else {
+                    glib::Propagation::Proceed
+                }
             });
 
             Ok(())
@@ -1313,7 +1318,11 @@ impl LuaApi for EventControllerKey {
                     .call::<_, Option<bool>>((key_name, keycode, state))
                     .unwrap();
 
-                gtk::Inhibit(result.unwrap_or(false))
+                if result.unwrap_or(false) {
+                    glib::Propagation::Stop
+                } else {
+                    glib::Propagation::Proceed
+                }
             });
 
             Ok(())
@@ -1347,7 +1356,11 @@ impl LuaApi for EventControllerScroll {
             this.connect_scroll(move |_, dx, dy| {
                 let result =
                     catch_lua_errors::<_, Option<bool>>(f.to_ref(), (dx, dy)).unwrap_or(None);
-                gtk::Inhibit(result.unwrap_or(false))
+                if result.unwrap_or(false) {
+                    glib::Propagation::Stop
+                } else {
+                    glib::Propagation::Proceed
+                }
             });
 
             Ok(())
@@ -1665,7 +1678,7 @@ fn push_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     layer_shell.set(
         "init_for_window",
         lua.create_function(|_, window: LuaUserDataRef<ApplicationWindow>| {
-            gtk4_layer_shell::init_for_window(&*window);
+            window.init_layer_shell();
             Ok(())
         })?,
     )?;
@@ -1673,7 +1686,7 @@ fn push_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         "set_layer",
         lua.create_function(
             |_, (window, layer): (LuaUserDataRef<ApplicationWindow>, enums::Layer)| {
-                gtk4_layer_shell::set_layer(&*window, layer.0);
+                window.set_layer(layer.0);
                 Ok(())
             },
         )?,
@@ -1681,7 +1694,7 @@ fn push_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
     layer_shell.set(
         "auto_exclusive_zone_enable",
         lua.create_function(|_, window: LuaUserDataRef<ApplicationWindow>| {
-            gtk4_layer_shell::auto_exclusive_zone_enable(&*window);
+            window.auto_exclusive_zone_enable();
             Ok(())
         })?,
     )?;
@@ -1689,7 +1702,7 @@ fn push_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         "set_exclusive_zone",
         lua.create_function(
             |_, (window, exclusive_zone): (LuaUserDataRef<ApplicationWindow>, i32)| {
-                gtk4_layer_shell::set_exclusive_zone(&*window, exclusive_zone);
+                window.set_exclusive_zone(exclusive_zone);
                 Ok(())
             },
         )?,
@@ -1698,7 +1711,7 @@ fn push_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         "set_margin",
         lua.create_function(
             |_, (window, edge, margin_size): (LuaUserDataRef<ApplicationWindow>, enums::Edge, i32)| {
-                gtk4_layer_shell::set_margin(&*window, edge.0, margin_size);
+                window.set_margin(edge.0, margin_size);
                 Ok(())
             },
         )?,
@@ -1712,7 +1725,7 @@ fn push_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
                 enums::Edge,
                 bool,
             )| {
-                gtk4_layer_shell::set_anchor(&*window, edge.0, anchor_to_edge);
+                window.set_anchor(edge.0, anchor_to_edge);
                 Ok(())
             },
         )?,
@@ -1721,7 +1734,7 @@ fn push_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         "set_keyboard_mode",
         lua.create_function(
             |_, (window, mode): (LuaUserDataRef<ApplicationWindow>, enums::KeyboardMode)| {
-                gtk4_layer_shell::set_keyboard_mode(&*window, mode.0);
+                window.set_keyboard_mode(mode.0);
                 Ok(())
             },
         )?,
@@ -1730,7 +1743,7 @@ fn push_layer_shell_api(lua: &Lua, gtk_table: &LuaTable) -> LuaResult<()> {
         "set_namespace",
         lua.create_function(
             |_, (window, namespace): (LuaUserDataRef<ApplicationWindow>, String)| {
-                gtk4_layer_shell::set_namespace(&*window, &namespace);
+                window.set_namespace(&namespace);
                 Ok(())
             },
         )?,

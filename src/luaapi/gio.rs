@@ -6,7 +6,7 @@ use gtk::{
         InputStreamAsyncBufRead, OutputStream, SocketClient, SocketConnection, Subprocess,
         ThemedIcon, UnixSocketAddress,
     },
-    glib::{Bytes, GString, PRIORITY_DEFAULT},
+    glib::{Bytes, GString, Priority},
 };
 use mlua::prelude::*;
 use paste::paste;
@@ -63,7 +63,7 @@ impl LuaApi for InputStream {
 
         reg.add_async_method("read", |lua, this, count: usize| async move {
             let data = this
-                .read_bytes_future(count, PRIORITY_DEFAULT)
+                .read_bytes_future(count, Priority::DEFAULT)
                 .await
                 .into_lua_err()?;
             lua.create_string(data)
@@ -71,14 +71,14 @@ impl LuaApi for InputStream {
 
         reg.add_async_method("skip", |_, this, count: usize| async move {
             let read = this
-                .skip_future(count, PRIORITY_DEFAULT)
+                .skip_future(count, Priority::DEFAULT)
                 .await
                 .into_lua_err()?;
             Ok(read)
         });
 
         reg.add_async_method("close", |_, this, ()| async move {
-            this.close_future(PRIORITY_DEFAULT).await.into_lua_err()?;
+            this.close_future(Priority::DEFAULT).await.into_lua_err()?;
             Ok(())
         });
     }
@@ -91,14 +91,14 @@ impl LuaApi for OutputStream {
         reg.add_async_method("write", |_, this, data: LuaString| async move {
             let buffer = Bytes::from(data.as_bytes());
             let written = this
-                .write_bytes_future(&buffer, PRIORITY_DEFAULT)
+                .write_bytes_future(&buffer, Priority::DEFAULT)
                 .await
                 .into_lua_err()?;
             Ok(written)
         });
 
         reg.add_async_method("flush", |_, this, ()| async move {
-            this.flush_future(PRIORITY_DEFAULT).await.into_lua_err()?;
+            this.flush_future(Priority::DEFAULT).await.into_lua_err()?;
             Ok(())
         });
 
@@ -107,7 +107,7 @@ impl LuaApi for OutputStream {
         reg.add_method("is_closing", |_, this, ()| Ok(this.is_closing()));
 
         reg.add_async_method("close", |_, this, ()| async move {
-            this.close_future(PRIORITY_DEFAULT).await.into_lua_err()?;
+            this.close_future(Priority::DEFAULT).await.into_lua_err()?;
             Ok(())
         });
     }
@@ -235,7 +235,7 @@ impl LuaApi for SocketConnection {
         });
 
         reg.add_async_method("close", |_, this, ()| async move {
-            this.close_future(PRIORITY_DEFAULT).await.into_lua_err()
+            this.close_future(Priority::DEFAULT).await.into_lua_err()
         });
     }
 }
@@ -283,13 +283,13 @@ impl LuaApi for File {
         });
 
         reg.add_async_method("read", |lua, this, ()| async move {
-            let stream = this.read_future(PRIORITY_DEFAULT).await.into_lua_err()?;
+            let stream = this.read_future(Priority::DEFAULT).await.into_lua_err()?;
             lua.create_any_userdata(stream.upcast::<InputStream>())
         });
 
         reg.add_async_method("create", |lua, this, ()| async move {
             let stream = this
-                .create_future(FileCreateFlags::NONE, PRIORITY_DEFAULT)
+                .create_future(FileCreateFlags::NONE, Priority::DEFAULT)
                 .await
                 .into_lua_err()?;
             lua.create_any_userdata(stream.upcast::<OutputStream>())
@@ -297,7 +297,7 @@ impl LuaApi for File {
 
         reg.add_async_method("replace", |lua, this, ()| async move {
             let stream = this
-                .replace_future(None, false, FileCreateFlags::NONE, PRIORITY_DEFAULT)
+                .replace_future(None, false, FileCreateFlags::NONE, Priority::DEFAULT)
                 .await
                 .into_lua_err()?;
             lua.create_any_userdata(stream.upcast::<OutputStream>())

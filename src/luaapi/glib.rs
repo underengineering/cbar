@@ -6,17 +6,17 @@ use crate::{traits::LuaApi, utils::catch_lua_errors_async};
 
 fn push_constants(lua: &Lua, glib_table: &LuaTable) -> LuaResult<()> {
     let priority = lua.create_table()?;
-    priority.set("HIGH", lua.create_any_userdata(glib::PRIORITY_HIGH)?)?;
-    priority.set("DEFAULT", lua.create_any_userdata(glib::PRIORITY_DEFAULT)?)?;
+    priority.set("HIGH", lua.create_any_userdata(glib::Priority::HIGH)?)?;
+    priority.set("DEFAULT", lua.create_any_userdata(glib::Priority::DEFAULT)?)?;
     priority.set(
         "HIGH_IDLE",
-        lua.create_any_userdata(glib::PRIORITY_HIGH_IDLE)?,
+        lua.create_any_userdata(glib::Priority::HIGH_IDLE)?,
     )?;
     priority.set(
         "DEFAULT_IDLE",
-        lua.create_any_userdata(glib::PRIORITY_DEFAULT_IDLE)?,
+        lua.create_any_userdata(glib::Priority::DEFAULT_IDLE)?,
     )?;
-    priority.set("LOW", lua.create_any_userdata(glib::PRIORITY_LOW)?)?;
+    priority.set("LOW", lua.create_any_userdata(glib::Priority::LOW)?)?;
     glib_table.set("Priority", priority)?;
 
     Ok(())

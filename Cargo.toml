@@ -24,8 +24,8 @@ clap = { version = "^4.3.0", features = ["derive"] }
 freedesktop-icons = "^0.2.0"
 futures = "^0.3.0"
 grass = "^0.13.0"
-gtk = { version = "=0.6.6", package = "gtk4", features = ["v4_10"] }
-gtk4-layer-shell = "=0.0.3"
+gtk = { version = "^0.7", package = "gtk4", features = ["v4_10"] }
+gtk4-layer-shell = "^0.2"
 paste = "^1.0.0"
 pulse = { version = "2.28.1", package = "libpulse-binding" }
 pulse_glib = { version = "2.28.1", package = "libpulse-glib-binding" }
