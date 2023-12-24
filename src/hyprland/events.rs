@@ -85,4 +85,10 @@ pub enum Event {
     WindowTitle {
         address: usize,
     },
+    IgnoreGroupLock {
+        ignore: bool,
+    },
+    LockGroups {
+        lock: bool,
+    },
 }

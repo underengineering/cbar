@@ -65,7 +65,7 @@ impl EventLoop {
             .as_mut()
             .expect("Event loop must be connected before usage");
 
-        let mut line = String::new();
+        let mut line = String::with_capacity(64);
         reader.read_line(&mut line).await?;
         let line = line.trim_end();
 
@@ -186,6 +186,12 @@ impl EventLoop {
             }
             "windowtitle" => Event::WindowTitle {
                 address: usize::from_str_radix(event_data, 16).unwrap(),
+            },
+            "ignoregrouplock" => Event::IgnoreGroupLock {
+                ignore: event_data == "1",
+            },
+            "lockgroups" => Event::LockGroups {
+                lock: event_data == "1",
             },
             _ => Err(Error::UnknownEvent(event_name.to_string()))?,
         })
