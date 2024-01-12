@@ -91,4 +91,5 @@ pub enum Event {
     LockGroups {
         lock: bool,
     },
+    ConfigReloaded,
 }
