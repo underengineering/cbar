@@ -8,6 +8,9 @@ pub enum ScreenCastOwner {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Event {
+    Unknown {
+        raw: String,
+    },
     Workspace {
         name: String,
     },

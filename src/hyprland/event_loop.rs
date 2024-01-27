@@ -194,7 +194,9 @@ impl EventLoop {
                 lock: event_data == "1",
             },
             "configreloaded" => Event::ConfigReloaded,
-            _ => Err(Error::UnknownEvent(event_name.to_string()))?,
+            _ => Event::Unknown {
+                raw: line.to_string(),
+            },
         })
     }
 

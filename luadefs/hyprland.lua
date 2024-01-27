@@ -130,6 +130,7 @@ local ScreenCastOwner = {
 }
 
 ---@class Event
+---@field Unknown { raw: string }
 ---@field Workspace { name: string }
 ---@field FocusedMonitor { monitor: string, workspace: string }
 ---@field ActiveWindow { class: string, title: string }

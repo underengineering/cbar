@@ -12,8 +12,6 @@ pub enum Error {
     GLib(#[from] glib::Error),
     #[error("Channel error")]
     ChannelError(#[from] broadcast::error::SendError<Event>),
-    #[error("Unknown event")]
-    UnknownEvent(String),
     #[error("JSON parsing error")]
     JsonParse(#[from] serde_json::Error),
     #[error("Max retries exceeded")]
