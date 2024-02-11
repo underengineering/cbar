@@ -1,5 +1,5 @@
 [toolchain]
 # https://rust-lang.github.io/rustup-components-history/
 components = ["rust-src", "rust-analyzer"]
-channel = "nightly-2023-08-02"
+channel = "nightly-2024-02-11"
 profile = "default"
