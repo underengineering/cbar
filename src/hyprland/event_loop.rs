@@ -200,7 +200,7 @@ impl EventLoop {
                 let name = iter.next().unwrap();
                 let description = iter.next().unwrap();
                 Event::MonitorAddedV2 {
-                    id: id.parse::<u64>().unwrap(),
+                    id: id.to_string(),
                     name: name.to_string(),
                     description: description.to_string(),
                 }

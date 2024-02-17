@@ -96,7 +96,7 @@ pub enum Event {
     },
     ConfigReloaded,
     MonitorAddedV2 {
-        id: u64,
+        id: String,
         name: String,
         description: String,
     },

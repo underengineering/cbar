@@ -156,6 +156,7 @@ local ScreenCastOwner = {
 ---@field IgnoreGroupLock { ignore: boolean }
 ---@field LockGroups { lock: boolean }
 ---@field ConfigReloaded {}
+---@field MonitorAddedV2 { id: string, name: string, description: string }
 
 ---@class Receiver
 local Receiver = {
