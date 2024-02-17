@@ -95,4 +95,9 @@ pub enum Event {
         lock: bool,
     },
     ConfigReloaded,
+    MonitorAddedV2 {
+        id: u64,
+        name: String,
+        description: String,
+    },
 }

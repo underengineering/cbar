@@ -153,6 +153,9 @@ local ScreenCastOwner = {
 ---@field Minimize { address: number, active: boolean }
 ---@field ScreenCast { state: boolean, owner: ScreenCastOwner }
 ---@field WindowTitle { address: number }
+---@field IgnoreGroupLock { ignore: boolean }
+---@field LockGroups { lock: boolean }
+---@field ConfigReloaded {}
 
 ---@class Receiver
 local Receiver = {

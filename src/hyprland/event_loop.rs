@@ -194,6 +194,17 @@ impl EventLoop {
                 lock: event_data == "1",
             },
             "configreloaded" => Event::ConfigReloaded,
+            "monitoraddedv2" => {
+                let mut iter = event_data.splitn(3, ',');
+                let id = iter.next().unwrap();
+                let name = iter.next().unwrap();
+                let description = iter.next().unwrap();
+                Event::MonitorAddedV2 {
+                    id: id.parse::<u64>().unwrap(),
+                    name: name.to_string(),
+                    description: description.to_string(),
+                }
+            }
             _ => Event::Unknown {
                 raw: line.to_string(),
             },
