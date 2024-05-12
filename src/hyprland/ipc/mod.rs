@@ -15,10 +15,11 @@ pub mod commands;
 use self::commands::Command;
 
 async fn try_request<T: Command>(buffer: &mut Vec<u8>) -> Result<(), Error> {
+    let xdg_runtime_dir = env::var("XDG_RUNTIME_DIR").expect("Failed to get XDG_RUNTIME_DIR");
     let hyprctl_instance_sig = env::var("HYPRLAND_INSTANCE_SIGNATURE")
         .expect("Failed to get the hyprland instance signature");
 
-    let socket_path = format!("/tmp/hypr/{hyprctl_instance_sig}/.socket.sock");
+    let socket_path = format!("{xdg_runtime_dir}/hypr/{hyprctl_instance_sig}/.socket.sock");
     let socket_path = Path::new(&socket_path);
 
     let sock = SocketClient::new();

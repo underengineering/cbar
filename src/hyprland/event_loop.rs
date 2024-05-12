@@ -33,10 +33,11 @@ impl EventLoop {
 
     /// Connects the event loop
     pub async fn connect(&mut self) -> Result<(), Error> {
+        let xdg_runtime_dir = env::var("XDG_RUNTIME_DIR").expect("Failed to get XDG_RUNTIME_DIR");
         let hyprctl_instance_sig = env::var("HYPRLAND_INSTANCE_SIGNATURE")
             .expect("Failed to get the hyprland instance signature");
 
-        let socket2_path = format!("/tmp/hypr/{hyprctl_instance_sig}/.socket2.sock");
+        let socket2_path = format!("{xdg_runtime_dir}/hypr/{hyprctl_instance_sig}/.socket2.sock");
         let socket2_path = Path::new(&socket2_path);
 
         let sock = SocketClient::new();
