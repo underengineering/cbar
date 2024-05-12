@@ -90,7 +90,7 @@ impl EventLoop {
                 }
             }
             "activewindowv2" => Event::ActiveWindowV2 {
-                address: if event_data == "," {
+                address: if event_data.is_empty() {
                     None
                 } else {
                     Some(usize::from_str_radix(event_data, 16).unwrap())
